@@ -1,0 +1,146 @@
+@startuml C4_Level3_Auth_Service
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Configuración para mejorar espaciado
+skinparam minClassWidth 120
+skinparam nodesep 80
+skinparam ranksep 100
+skinparam linetype ortho
+skinparam arrow {
+    FontSize 9
+    Color Black
+}
+
+title **Nivel 3: Componentes - Auth Service (Identity & Access Context)**
+
+Person(user, "Usuario", "Estudiante, Instructor, Admin")
+System_Ext(keycloak, "Keycloak", "OAuth 2.0/OIDC Provider")
+System_Ext(api_gateway, "API Gateway", "Kong + Traefik")
+
+Container_Boundary(auth_service, "Auth Service - Spring Boot 3") {
+
+    ' Controllers Layer
+    Component(auth_controller, "Auth Controller", "Spring MVC", "Endpoints de autenticación")
+    Component(user_controller, "User Controller", "Spring MVC", "Gestión de usuarios")
+    Component(role_controller, "Role Controller", "Spring MVC", "Gestión de roles y permisos")
+    Component(token_controller, "Token Controller", "Spring MVC", "Gestión de tokens JWT")
+
+    ' Security Layer
+    Component(jwt_filter, "JWT Filter", "Spring Security", "Filtro validación JWT")
+    Component(oauth2_filter, "OAuth2 Filter", "Spring Security", "Filtro OAuth2 validation")
+    Component(security_config, "Security Config", "Spring Security", "Configuración de seguridad")
+    Component(cors_filter, "CORS Filter", "Spring Security", "Filtro CORS")
+
+    ' Service Layer (Application Services)
+    Component(auth_service_impl, "Authentication Service", "Spring Service", "Lógica de autenticación")
+    Component(user_service_impl, "User Management Service", "Spring Service", "Gestión de usuarios")
+    Component(role_service_impl, "Role Service", "Spring Service", "Gestión de roles")
+    Component(token_service_impl, "Token Service", "Spring Service", "Generación y validación JWT")
+    Component(password_service, "Password Service", "Spring Service", "Gestión de contraseñas")
+
+    ' Domain Layer (DDD)
+    Component(user_aggregate, "User Aggregate", "Domain Entity", "Agregado Usuario con reglas de negocio")
+    Component(role_aggregate, "Role Aggregate", "Domain Entity", "Agregado Rol con permisos")
+    Component(session_aggregate, "Session Aggregate", "Domain Entity", "Agregado Sesión de usuario")
+    Component(auth_domain_service, "Auth Domain Service", "Domain Service", "Servicios de dominio de autenticación")
+
+    ' Repository Layer
+    Component(user_repository, "User Repository", "Spring Data JPA", "Repositorio de usuarios")
+    Component(role_repository, "Role Repository", "Spring Data JPA", "Repositorio de roles")
+    Component(session_repository, "Session Repository", "Spring Data JPA", "Repositorio de sesiones")
+    Component(audit_repository, "Audit Repository", "Spring Data JPA", "Repositorio de auditoría")
+
+    ' Infrastructure Layer
+    Component(password_encoder, "Password Encoder", "BCrypt", "Codificación de contraseñas")
+    Component(jwt_provider, "JWT Provider", "JJWT Library", "Generación y validación JWT")
+    Component(cache_manager, "Cache Manager", "Spring Cache + Redis", "Gestión de caché")
+    Component(event_publisher, "Event Publisher", "Spring Events + Kafka", "Publicación de eventos")
+    Component(metrics_collector, "Metrics Collector", "Micrometer", "Recolección de métricas")
+}
+
+' External Systems
+ContainerDb(postgres_db, "PostgreSQL", "Database", "Almacenamiento de usuarios y roles")
+ContainerDb(redis_cache, "Redis Cluster", "Cache", "Sesiones y caché")
+ContainerQueue(kafka_broker, "Apache Kafka", "Event Broker", "Eventos de autenticación")
+System_Ext(vault, "HashiCorp Vault", "Gestión de secretos")
+System_Ext(monitoring, "Prometheus", "Métricas y monitoreo")
+
+' === RELACIONES ===
+
+' External to Controllers
+Rel(user, api_gateway, "Requests", "HTTPS")
+Rel(api_gateway, auth_controller, "Auth API", "HTTP")
+Rel(api_gateway, user_controller, "User API", "HTTP")
+Rel(api_gateway, role_controller, "Role API", "HTTP")
+Rel(api_gateway, token_controller, "Token API", "HTTP")
+
+Rel(keycloak, oauth2_filter, "OAuth2 Validation", "HTTPS")
+
+' Security Layer Flow
+Rel(auth_controller, jwt_filter, "JWT Validation", "Filter Chain")
+Rel(user_controller, jwt_filter, "JWT Validation", "Filter Chain")
+Rel(role_controller, oauth2_filter, "OAuth2 Check", "Filter Chain")
+Rel(jwt_filter, security_config, "Security Rules", "Spring Security")
+Rel(oauth2_filter, security_config, "OAuth2 Rules", "Spring Security")
+Rel(cors_filter, security_config, "CORS Rules", "Spring Security")
+
+' Controllers to Services
+Rel(auth_controller, auth_service_impl, "Auth Logic", "Service Call")
+Rel(user_controller, user_service_impl, "User Logic", "Service Call")
+Rel(role_controller, role_service_impl, "Role Logic", "Service Call")
+Rel(token_controller, token_service_impl, "Token Logic", "Service Call")
+
+' Services to Domain
+Rel(auth_service_impl, user_aggregate, "User Domain", "Domain Call")
+Rel(auth_service_impl, auth_domain_service, "Auth Domain", "Domain Call")
+Rel(user_service_impl, user_aggregate, "User Operations", "Domain Call")
+Rel(role_service_impl, role_aggregate, "Role Operations", "Domain Call")
+Rel(token_service_impl, session_aggregate, "Session Mgmt", "Domain Call")
+Rel(password_service, user_aggregate, "Password Ops", "Domain Call")
+
+' Services to Infrastructure
+Rel(auth_service_impl, password_encoder, "Encode Password", "BCrypt")
+Rel(token_service_impl, jwt_provider, "Generate JWT", "JJWT")
+Rel(auth_service_impl, cache_manager, "Cache Auth", "Redis")
+Rel(user_service_impl, event_publisher, "User Events", "Kafka")
+
+' Domain to Repository
+Rel(user_aggregate, user_repository, "Persist User", "JPA")
+Rel(role_aggregate, role_repository, "Persist Role", "JPA")
+Rel(session_aggregate, session_repository, "Persist Session", "JPA")
+Rel(auth_domain_service, audit_repository, "Audit Log", "JPA")
+
+' Repository to Database
+Rel(user_repository, postgres_db, "User Data", "SQL")
+Rel(role_repository, postgres_db, "Role Data", "SQL")
+Rel(session_repository, postgres_db, "Session Data", "SQL")
+Rel(audit_repository, postgres_db, "Audit Data", "SQL")
+
+' Infrastructure to External
+Rel(cache_manager, redis_cache, "Cache Operations", "Redis Protocol")
+Rel(event_publisher, kafka_broker, "Auth Events", "Kafka Protocol")
+Rel(jwt_provider, vault, "JWT Secrets", "HTTPS")
+Rel(metrics_collector, monitoring, "Auth Metrics", "HTTP")
+
+' Cross-cutting Concerns
+Rel(password_encoder, vault, "Salt Secrets", "HTTPS")
+Rel(cache_manager, session_aggregate, "Session Cache", "Memory")
+
+' Layout hints
+auth_controller -[hidden]R- user_controller
+user_controller -[hidden]R- role_controller
+role_controller -[hidden]R- token_controller
+
+jwt_filter -[hidden]R- oauth2_filter
+oauth2_filter -[hidden]R- security_config
+
+auth_service_impl -[hidden]R- user_service_impl
+user_service_impl -[hidden]R- role_service_impl
+
+user_aggregate -[hidden]R- role_aggregate
+role_aggregate -[hidden]R- session_aggregate
+
+user_repository -[hidden]R- role_repository
+role_repository -[hidden]R- session_repository
+
+@enduml

@@ -1,0 +1,151 @@
+@startuml C4_Level3_User_Service
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Configuración para mejorar espaciado
+skinparam minClassWidth 120
+skinparam nodesep 80
+skinparam ranksep 100
+skinparam linetype ortho
+skinparam arrow {
+    FontSize 9
+    Color Black
+}
+
+title **Nivel 3: Componentes - User Service (User Management Context)**
+
+Person(admin, "Administrador", "Gestiona usuarios del sistema")
+System_Ext(api_gateway, "API Gateway", "Kong + Traefik")
+System_Ext(auth_service, "Auth Service", "Autenticación y autorización")
+
+Container_Boundary(user_service, "User Service - Node.js + Express + TypeScript") {
+
+    ' API Layer (Controllers)
+    Component(user_controller, "User Controller", "Express Router", "CRUD de usuarios")
+    Component(profile_controller, "Profile Controller", "Express Router", "Gestión de perfiles")
+    Component(preference_controller, "Preference Controller", "Express Router", "Preferencias de usuario")
+    Component(search_controller, "Search Controller", "Express Router", "Búsqueda de usuarios")
+
+    ' Middleware Layer
+    Component(auth_middleware, "Auth Middleware", "Express Middleware", "Validación JWT")
+    Component(validation_middleware, "Validation Middleware", "Joi/Zod", "Validación de datos")
+    Component(rate_limit_middleware, "Rate Limit Middleware", "Express Rate Limit", "Control de velocidad")
+    Component(error_middleware, "Error Middleware", "Express Error Handler", "Manejo de errores")
+
+    ' Service Layer (Application Services)
+    Component(user_application_service, "User Application Service", "TypeScript Class", "Orquestación de casos de uso")
+    Component(profile_service, "Profile Service", "TypeScript Class", "Lógica de perfiles")
+    Component(preference_service, "Preference Service", "TypeScript Class", "Gestión de preferencias")
+    Component(notification_service, "Notification Service", "TypeScript Class", "Notificaciones de usuario")
+    Component(search_service, "Search Service", "TypeScript Class", "Servicio de búsqueda")
+
+    ' Domain Layer (DDD)
+    Component(user_aggregate, "User Aggregate", "Domain Entity", "Agregado Usuario con invariantes")
+    Component(profile_entity, "Profile Entity", "Domain Entity", "Entidad Perfil de usuario")
+    Component(preference_value_object, "Preference VO", "Value Object", "Objeto valor Preferencias")
+    Component(user_domain_service, "User Domain Service", "Domain Service", "Reglas de negocio complejas")
+    Component(user_factory, "User Factory", "Domain Factory", "Creación de usuarios")
+
+    ' Repository Interfaces (Domain)
+    Component(user_repository_interface, "IUser Repository", "Interface", "Contrato repositorio usuario")
+    Component(profile_repository_interface, "IProfile Repository", "Interface", "Contrato repositorio perfil")
+
+    ' Infrastructure Layer
+    Component(user_repository_impl, "User Repository", "Prisma ORM", "Implementación repositorio usuario")
+    Component(profile_repository_impl, "Profile Repository", "Prisma ORM", "Implementación repositorio perfil")
+    Component(search_repository, "Search Repository", "Elasticsearch Client", "Repositorio de búsqueda")
+    Component(cache_service, "Cache Service", "Redis Client", "Servicio de caché")
+    Component(event_publisher, "Event Publisher", "Kafka Producer", "Publicador de eventos")
+    Component(file_storage_service, "File Storage Service", "AWS S3 SDK", "Almacenamiento de archivos")
+
+    ' External Integration
+    Component(email_service, "Email Service", "SendGrid SDK", "Servicio de email")
+    Component(metrics_service, "Metrics Service", "Prometheus Client", "Métricas y monitoreo")
+}
+
+' External Systems
+ContainerDb(postgres_db, "PostgreSQL", "Database", "Datos de usuarios y perfiles")
+ContainerDb(redis_cache, "Redis Cluster", "Cache", "Caché de usuarios")
+ContainerDb(elasticsearch, "Elasticsearch", "Search Engine", "Índice de búsqueda")
+ContainerQueue(kafka_broker, "Apache Kafka", "Event Broker", "Eventos de usuario")
+System_Ext(s3_storage, "AWS S3", "File Storage", "Avatares y archivos")
+System_Ext(sendgrid, "SendGrid", "Email Service", "Envío de emails")
+System_Ext(monitoring, "Prometheus", "Monitoring", "Métricas")
+
+' === RELACIONES ===
+
+' External to API Layer
+Rel(admin, api_gateway, "User Management", "HTTPS")
+Rel(api_gateway, user_controller, "User API", "HTTP/JSON")
+Rel(api_gateway, profile_controller, "Profile API", "HTTP/JSON")
+Rel(api_gateway, preference_controller, "Preference API", "HTTP/JSON")
+Rel(api_gateway, search_controller, "Search API", "HTTP/JSON")
+
+Rel(auth_service, auth_middleware, "JWT Validation", "HTTP")
+
+' Middleware Flow
+Rel(user_controller, auth_middleware, "Auth Check", "Middleware")
+Rel(profile_controller, validation_middleware, "Data Validation", "Middleware")
+Rel(search_controller, rate_limit_middleware, "Rate Control", "Middleware")
+Rel(preference_controller, error_middleware, "Error Handling", "Middleware")
+
+' Controllers to Services
+Rel(user_controller, user_application_service, "User Operations", "Service Call")
+Rel(profile_controller, profile_service, "Profile Operations", "Service Call")
+Rel(preference_controller, preference_service, "Preference Operations", "Service Call")
+Rel(search_controller, search_service, "Search Operations", "Service Call")
+
+' Application Services to Domain
+Rel(user_application_service, user_aggregate, "User Domain Logic", "Domain Call")
+Rel(user_application_service, user_domain_service, "Complex Business Rules", "Domain Call")
+Rel(user_application_service, user_factory, "Create User", "Factory Call")
+Rel(profile_service, profile_entity, "Profile Logic", "Domain Call")
+Rel(preference_service, preference_value_object, "Preference Logic", "Value Object")
+
+' Services to Repository Interfaces
+Rel(user_application_service, user_repository_interface, "User Persistence", "Interface")
+Rel(profile_service, profile_repository_interface, "Profile Persistence", "Interface")
+Rel(search_service, search_repository, "Search Operations", "Direct Call")
+
+' Repository Implementation
+Rel(user_repository_interface, user_repository_impl, "Implementation", "Dependency Injection")
+Rel(profile_repository_interface, profile_repository_impl, "Implementation", "Dependency Injection")
+
+' Infrastructure to External Systems
+Rel(user_repository_impl, postgres_db, "User Data", "SQL via Prisma")
+Rel(profile_repository_impl, postgres_db, "Profile Data", "SQL via Prisma")
+Rel(search_repository, elasticsearch, "Search Index", "HTTP/JSON")
+Rel(cache_service, redis_cache, "Cache Operations", "Redis Protocol")
+Rel(event_publisher, kafka_broker, "User Events", "Kafka Protocol")
+Rel(file_storage_service, s3_storage, "File Operations", "AWS S3 API")
+Rel(email_service, sendgrid, "Send Emails", "SendGrid API")
+Rel(metrics_service, monitoring, "User Metrics", "HTTP/Prometheus")
+
+' Service to Infrastructure
+Rel(user_application_service, cache_service, "Cache User Data", "Service Call")
+Rel(user_application_service, event_publisher, "Publish User Events", "Service Call")
+Rel(profile_service, file_storage_service, "Store Avatar", "Service Call")
+Rel(notification_service, email_service, "Send Notifications", "Service Call")
+Rel(search_service, cache_service, "Cache Search Results", "Service Call")
+
+' Cross-cutting Concerns
+Rel(user_aggregate, event_publisher, "Domain Events", "Event Sourcing")
+Rel(profile_service, metrics_service, "Profile Metrics", "Metrics Collection")
+
+' Layout hints
+user_controller -[hidden]R- profile_controller
+profile_controller -[hidden]R- preference_controller
+preference_controller -[hidden]R- search_controller
+
+auth_middleware -[hidden]R- validation_middleware
+validation_middleware -[hidden]R- rate_limit_middleware
+
+user_application_service -[hidden]R- profile_service
+profile_service -[hidden]R- preference_service
+
+user_aggregate -[hidden]R- profile_entity
+profile_entity -[hidden]R- preference_value_object
+
+user_repository_impl -[hidden]R- profile_repository_impl
+profile_repository_impl -[hidden]R- search_repository
+
+@enduml

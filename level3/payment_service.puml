@@ -1,0 +1,190 @@
+@startuml C4_Level3_Payment_Service
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Configuración para mejorar espaciado
+skinparam minClassWidth 120
+skinparam nodesep 80
+skinparam ranksep 100
+skinparam linetype ortho
+skinparam arrow {
+    FontSize 9
+    Color Black
+}
+
+title **Nivel 3: Componentes - Payment Service (Payment Context)**
+
+Person(student, "Estudiante", "Realiza pagos de cursos")
+Person(admin, "Administrador", "Gestiona pagos y reembolsos")
+System_Ext(api_gateway, "API Gateway", "Kong + Traefik")
+
+Container_Boundary(payment_service, "Payment Service - Java + Spring Boot") {
+
+    ' Controllers Layer
+    Component(payment_controller, "Payment Controller", "Spring MVC", "Procesamiento de pagos")
+    Component(subscription_controller, "Subscription Controller", "Spring MVC", "Gestión de suscripciones")
+    Component(refund_controller, "Refund Controller", "Spring MVC", "Gestión de reembolsos")
+    Component(invoice_controller, "Invoice Controller", "Spring MVC", "Gestión de facturas")
+    Component(webhook_controller, "Webhook Controller", "Spring MVC", "Webhooks de payment gateways")
+
+    ' Security & Middleware Layer
+    Component(payment_security_filter, "Payment Security Filter", "Spring Security", "Filtro de seguridad para pagos")
+    Component(idempotency_filter, "Idempotency Filter", "Custom Filter", "Control de idempotencia")
+    Component(rate_limit_filter, "Rate Limit Filter", "Bucket4j", "Control de velocidad")
+    Component(audit_interceptor, "Audit Interceptor", "Spring AOP", "Auditoría de transacciones")
+
+    ' Application Layer (Use Cases)
+    Component(payment_application_service, "Payment Application Service", "Spring Service", "Casos de uso de pagos")
+    Component(subscription_service, "Subscription Service", "Spring Service", "Lógica de suscripciones")
+    Component(refund_service, "Refund Service", "Spring Service", "Lógica de reembolsos")
+    Component(invoice_service, "Invoice Service", "Spring Service", "Generación de facturas")
+    Component(fraud_detection_service, "Fraud Detection Service", "Spring Service", "Detección de fraudes")
+
+    ' Domain Layer (DDD + Event Sourcing)
+    Component(payment_aggregate, "Payment Aggregate", "Domain Entity", "Agregado Pago con Event Sourcing")
+    Component(subscription_aggregate, "Subscription Aggregate", "Domain Entity", "Agregado Suscripción")
+    Component(invoice_aggregate, "Invoice Aggregate", "Domain Entity", "Agregado Factura")
+    Component(money_value_object, "Money VO", "Value Object", "Objeto valor Money con Currency")
+    Component(payment_method_value_object, "Payment Method VO", "Value Object", "Método de pago")
+    Component(payment_domain_service, "Payment Domain Service", "Domain Service", "Reglas de negocio de pagos")
+    Component(subscription_policy, "Subscription Policy", "Domain Policy", "Políticas de suscripción")
+
+    ' Event Sourcing Components
+    Component(event_store, "Event Store", "Custom Implementation", "Almacén de eventos")
+    Component(payment_event_handler, "Payment Event Handler", "Spring Event", "Manejador de eventos de pago")
+    Component(projection_service, "Projection Service", "Spring Service", "Servicio de proyecciones")
+
+    ' Repository Interfaces
+    Component(payment_repository_interface, "IPayment Repository", "Interface", "Contrato repositorio pago")
+    Component(subscription_repository_interface, "ISubscription Repository", "Interface", "Contrato repositorio suscripción")
+    Component(invoice_repository_interface, "IInvoice Repository", "Interface", "Contrato repositorio factura")
+
+    ' Infrastructure Layer
+    Component(payment_repository_impl, "Payment Repository", "Spring Data JPA", "Implementación repositorio pago")
+    Component(subscription_repository_impl, "Subscription Repository", "Spring Data JPA", "Implementación repositorio suscripción")
+    Component(invoice_repository_impl, "Invoice Repository", "Spring Data JPA", "Implementación repositorio factura")
+    Component(stripe_gateway, "Stripe Gateway", "Stripe Java SDK", "Gateway para Stripe")
+    Component(paypal_gateway, "PayPal Gateway", "PayPal Java SDK", "Gateway para PayPal")
+    Component(cache_service, "Cache Service", "Spring Cache + Redis", "Servicio de caché")
+    Component(event_publisher, "Event Publisher", "Spring Kafka", "Publicador de eventos")
+    Component(notification_service, "Notification Service", "RestTemplate", "Servicio de notificaciones")
+    Component(encryption_service, "Encryption Service", "Spring Security Crypto", "Cifrado de datos sensibles")
+}
+
+' External Systems
+ContainerDb(postgres_db, "PostgreSQL", "Database", "Transacciones y proyecciones")
+ContainerDb(redis_cache, "Redis Cluster", "Cache", "Caché de pagos")
+ContainerQueue(kafka_broker, "Apache Kafka", "Event Broker", "Eventos de pagos")
+System_Ext(stripe, "Stripe", "Payment Gateway", "Procesamiento de tarjetas")
+System_Ext(paypal, "PayPal", "Payment Gateway", "Procesamiento PayPal")
+System_Ext(vault, "HashiCorp Vault", "Secrets Management", "Claves de API")
+System_Ext(monitoring, "Prometheus", "Monitoring", "Métricas de pagos")
+
+' === RELACIONES ===
+
+' External to Controllers
+Rel(student, api_gateway, "Payment Requests", "HTTPS")
+Rel(admin, api_gateway, "Payment Management", "HTTPS")
+Rel(api_gateway, payment_controller, "Payment API", "HTTP/JSON")
+Rel(api_gateway, subscription_controller, "Subscription API", "HTTP/JSON")
+Rel(api_gateway, refund_controller, "Refund API", "HTTP/JSON")
+Rel(api_gateway, invoice_controller, "Invoice API", "HTTP/JSON")
+
+Rel(stripe, webhook_controller, "Stripe Webhooks", "HTTPS")
+Rel(paypal, webhook_controller, "PayPal Webhooks", "HTTPS")
+
+' Security & Middleware Flow
+Rel(payment_controller, payment_security_filter, "Security Check", "Filter Chain")
+Rel(subscription_controller, idempotency_filter, "Idempotency Check", "Filter Chain")
+Rel(refund_controller, rate_limit_filter, "Rate Control", "Filter Chain")
+Rel(invoice_controller, audit_interceptor, "Audit Log", "AOP Interceptor")
+
+' Controllers to Application Services
+Rel(payment_controller, payment_application_service, "Payment Logic", "Service Call")
+Rel(subscription_controller, subscription_service, "Subscription Logic", "Service Call")
+Rel(refund_controller, refund_service, "Refund Logic", "Service Call")
+Rel(invoice_controller, invoice_service, "Invoice Logic", "Service Call")
+Rel(webhook_controller, payment_application_service, "Webhook Processing", "Service Call")
+
+' Application Services to Domain
+Rel(payment_application_service, payment_aggregate, "Payment Domain Logic", "Domain Call")
+Rel(payment_application_service, payment_domain_service, "Complex Payment Rules", "Domain Service")
+Rel(payment_application_service, fraud_detection_service, "Fraud Check", "Service Call")
+Rel(subscription_service, subscription_aggregate, "Subscription Logic", "Domain Call")
+Rel(subscription_service, subscription_policy, "Subscription Rules", "Policy Check")
+Rel(refund_service, payment_aggregate, "Refund Logic", "Domain Call")
+Rel(invoice_service, invoice_aggregate, "Invoice Logic", "Domain Call")
+
+' Domain to Value Objects
+Rel(payment_aggregate, money_value_object, "Money Operations", "Value Object")
+Rel(payment_aggregate, payment_method_value_object, "Payment Method", "Value Object")
+Rel(subscription_aggregate, money_value_object, "Subscription Amount", "Value Object")
+
+' Event Sourcing Flow
+Rel(payment_aggregate, event_store, "Store Payment Events", "Event Sourcing")
+Rel(subscription_aggregate, event_store, "Store Subscription Events", "Event Sourcing")
+Rel(event_store, payment_event_handler, "Handle Events", "Event Handler")
+Rel(payment_event_handler, projection_service, "Update Projections", "Service Call")
+
+' Application Services to Repository Interfaces
+Rel(payment_application_service, payment_repository_interface, "Payment Persistence", "Interface")
+Rel(subscription_service, subscription_repository_interface, "Subscription Persistence", "Interface")
+Rel(invoice_service, invoice_repository_interface, "Invoice Persistence", "Interface")
+
+' Repository Implementation
+Rel(payment_repository_interface, payment_repository_impl, "Implementation", "Dependency Injection")
+Rel(subscription_repository_interface, subscription_repository_impl, "Implementation", "Dependency Injection")
+Rel(invoice_repository_interface, invoice_repository_impl, "Implementation", "Dependency Injection")
+
+' Infrastructure to External Systems
+Rel(payment_repository_impl, postgres_db, "Payment Data", "SQL via JPA")
+Rel(subscription_repository_impl, postgres_db, "Subscription Data", "SQL via JPA")
+Rel(invoice_repository_impl, postgres_db, "Invoice Data", "SQL via JPA")
+Rel(event_store, postgres_db, "Event Data", "SQL")
+Rel(projection_service, postgres_db, "Projection Data", "SQL")
+Rel(cache_service, redis_cache, "Cache Operations", "Redis Protocol")
+Rel(event_publisher, kafka_broker, "Payment Events", "Kafka Protocol")
+
+' Payment Gateway Integration
+Rel(payment_application_service, stripe_gateway, "Process Stripe Payment", "Stripe API")
+Rel(payment_application_service, paypal_gateway, "Process PayPal Payment", "PayPal API")
+Rel(stripe_gateway, stripe, "Stripe API Calls", "HTTPS/REST")
+Rel(paypal_gateway, paypal, "PayPal API Calls", "HTTPS/REST")
+
+' Application Services to Infrastructure
+Rel(payment_application_service, cache_service, "Cache Payment Data", "Service Call")
+Rel(payment_application_service, event_publisher, "Publish Payment Events", "Service Call")
+Rel(payment_application_service, encryption_service, "Encrypt Sensitive Data", "Service Call")
+Rel(subscription_service, notification_service, "Send Notifications", "Service Call")
+Rel(fraud_detection_service, cache_service, "Cache Fraud Patterns", "Service Call")
+
+' Security and Secrets
+Rel(stripe_gateway, vault, "Stripe API Keys", "HTTPS")
+Rel(paypal_gateway, vault, "PayPal API Keys", "HTTPS")
+Rel(encryption_service, vault, "Encryption Keys", "HTTPS")
+
+' Monitoring
+Rel(payment_application_service, monitoring, "Payment Metrics", "HTTP/Prometheus")
+Rel(fraud_detection_service, monitoring, "Fraud Metrics", "HTTP/Prometheus")
+
+' Cross-cutting Concerns
+Rel(payment_aggregate, event_publisher, "Domain Events", "Event Sourcing")
+Rel(subscription_aggregate, event_publisher, "Subscription Events", "Event Sourcing")
+
+' Layout hints
+payment_controller -[hidden]R- subscription_controller
+subscription_controller -[hidden]R- refund_controller
+refund_controller -[hidden]R- invoice_controller
+
+payment_application_service -[hidden]R- subscription_service
+subscription_service -[hidden]R- refund_service
+
+payment_aggregate -[hidden]R- subscription_aggregate
+subscription_aggregate -[hidden]R- invoice_aggregate
+
+stripe_gateway -[hidden]R- paypal_gateway
+paypal_gateway -[hidden]R- cache_service
+
+payment_repository_impl -[hidden]R- subscription_repository_impl
+subscription_repository_impl -[hidden]R- invoice_repository_impl
+
+@enduml

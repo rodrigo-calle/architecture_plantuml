@@ -1,0 +1,153 @@
+@startuml C4_Level1_Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+' Configuración para mejorar el espaciado
+skinparam minClassWidth 150
+skinparam nodesep 100
+skinparam ranksep 120
+skinparam linetype ortho
+skinparam arrow {
+    FontSize 10
+    Color Black
+}
+skinparam packageStyle rectangle
+skinparam backgroundColor White
+
+title **Nivel 1: Contexto - CRM Educativo**
+
+' === USUARIOS PRINCIPALES ===
+Person(student, "Estudiante", "Usuario que se inscribe en cursos, consume contenido educativo y realiza pagos")
+Person(instructor, "Instructor", "Profesor que crea cursos, gestiona contenido y da clases en vivo")
+Person(admin, "Administrador", "Administra usuarios, configura el sistema y gestiona operaciones")
+Person(marketing, "Marketing Manager", "Gestiona campañas de marketing, leads y estrategias de captación")
+Person(sales, "Sales Representative", "Gestiona clientes, oportunidades de venta y pipeline comercial")
+Person(support, "Soporte Técnico", "Brinda atención al cliente y resuelve problemas técnicos")
+Person(content_creator, "Creador de Contenido", "Desarrolla material educativo y recursos de aprendizaje")
+Person(business_analyst, "Business Analyst", "Analiza métricas de negocio y genera reportes")
+
+' === SISTEMA PRINCIPAL ===
+System(crm_educativo, "CRM Educativo", "Plataforma integral que combina gestión de relaciones con clientes (CRM) y sistema de gestión de aprendizaje (LMS) para instituciones educativas")
+
+' === SISTEMAS EXTERNOS ===
+
+' Payment & Financial
+System_Ext(stripe, "Stripe", "Procesamiento de pagos con tarjeta de crédito y débito")
+System_Ext(paypal, "PayPal", "Procesamiento de pagos alternativos y billeteras digitales")
+System_Ext(banks, "Bancos Locales", "Integración con bancos para transferencias y pagos locales")
+
+' Communication & Marketing
+System_Ext(sendgrid, "SendGrid", "Servicio de envío masivo de emails y campañas de marketing")
+System_Ext(twilio, "Twilio", "Servicio de SMS y comunicaciones telefónicas")
+System_Ext(whatsapp_business, "WhatsApp Business API", "Mensajería empresarial y soporte via WhatsApp")
+System_Ext(firebase, "Firebase", "Push notifications para aplicaciones móviles")
+
+' Video & Content
+System_Ext(zoom, "Zoom", "Plataforma de videoconferencias para clases en vivo")
+System_Ext(webrtc, "WebRTC", "Tecnología de comunicación en tiempo real para video")
+System_Ext(aws_mediaconvert, "AWS MediaConvert", "Procesamiento y conversión de videos educativos")
+
+' AI & Analytics
+System_Ext(openai, "OpenAI GPT-4", "Inteligencia artificial para chatbots y asistentes virtuales")
+System_Ext(google_analytics, "Google Analytics", "Analytics web y seguimiento de comportamiento de usuarios")
+System_Ext(mixpanel, "Mixpanel", "Analytics avanzados de eventos y comportamiento")
+
+' Infrastructure & Cloud
+System_Ext(aws_cloud, "Amazon Web Services", "Infraestructura cloud para hosting, almacenamiento y servicios")
+System_Ext(cloudflare, "Cloudflare", "CDN, protección DDoS y optimización de rendimiento")
+
+' Monitoring & Security
+System_Ext(datadog, "Datadog", "Monitoreo de aplicaciones, logs e infraestructura")
+System_Ext(vault, "HashiCorp Vault", "Gestión segura de secretos y credenciales")
+System_Ext(auth0, "Auth0", "Servicio de autenticación externa y gestión de identidades")
+
+' Business Intelligence
+System_Ext(snowflake, "Snowflake", "Data warehouse en la nube para analytics avanzados")
+System_Ext(tableau, "Tableau", "Herramientas de visualización de datos y business intelligence")
+
+' Social & External Platforms
+System_Ext(social_media, "Redes Sociales", "Integración con Facebook, Instagram, LinkedIn para marketing")
+System_Ext(google_workspace, "Google Workspace", "Integración con Gmail, Calendar y Drive")
+System_Ext(microsoft_365, "Microsoft 365", "Integración con Outlook, Teams y OneDrive")
+
+' === RELACIONES PRINCIPALES ===
+
+' Usuarios to Sistema Principal
+Rel(student, crm_educativo, "Accede a cursos, realiza pagos, consume contenido", "Web/Mobile App")
+Rel(instructor, crm_educativo, "Crea cursos, gestiona contenido, da clases", "Web App")
+Rel(admin, crm_educativo, "Administra sistema, usuarios y configuraciones", "Admin Dashboard")
+Rel(marketing, crm_educativo, "Gestiona campañas, leads y marketing automation", "CRM Dashboard")
+Rel(sales, crm_educativo, "Gestiona clientes, oportunidades y pipeline", "CRM Dashboard")
+Rel(support, crm_educativo, "Brinda soporte técnico y atención al cliente", "Support Dashboard")
+Rel(content_creator, crm_educativo, "Desarrolla y gestiona contenido educativo", "Content Management")
+Rel(business_analyst, crm_educativo, "Analiza métricas y genera reportes", "Analytics Dashboard")
+
+' Sistema Principal to Payment Systems
+Rel(crm_educativo, stripe, "Procesa pagos con tarjetas", "REST API")
+Rel(crm_educativo, paypal, "Procesa pagos alternativos", "REST API")
+Rel(crm_educativo, banks, "Procesa transferencias bancarias", "API Bancaria")
+
+' Sistema Principal to Communication Systems
+Rel(crm_educativo, sendgrid, "Envía emails de marketing y transaccionales", "REST API")
+Rel(crm_educativo, twilio, "Envía SMS y notificaciones telefónicas", "REST API")
+Rel(crm_educativo, whatsapp_business, "Envía mensajes de WhatsApp", "Business API")
+Rel(crm_educativo, firebase, "Envía push notifications", "Firebase Admin SDK")
+
+' Sistema Principal to Video & Content Systems
+Rel(crm_educativo, zoom, "Integra clases en vivo", "Zoom API")
+Rel(crm_educativo, webrtc, "Habilita comunicación en tiempo real", "WebRTC Protocol")
+Rel(crm_educativo, aws_mediaconvert, "Procesa y optimiza videos", "AWS API")
+
+' Sistema Principal to AI & Analytics
+Rel(crm_educativo, openai, "Integra chatbots inteligentes", "OpenAI API")
+Rel(crm_educativo, google_analytics, "Envía datos de analytics web", "Measurement Protocol")
+Rel(crm_educativo, mixpanel, "Envía eventos de comportamiento", "REST API")
+
+' Sistema Principal to Infrastructure
+Rel(crm_educativo, aws_cloud, "Desplegado en infraestructura cloud", "AWS Services")
+Rel(crm_educativo, cloudflare, "Distribución de contenido y seguridad", "CDN")
+
+' Sistema Principal to Monitoring & Security
+Rel(crm_educativo, datadog, "Envía métricas y logs", "Agent/API")
+Rel(crm_educativo, vault, "Obtiene secretos y credenciales", "Vault API")
+Rel(crm_educativo, auth0, "Autentica usuarios externos", "OAuth 2.0/OIDC")
+
+' Sistema Principal to Business Intelligence
+Rel(crm_educativo, snowflake, "Exporta datos para analytics", "Snowflake Connector")
+Rel(crm_educativo, tableau, "Visualiza datos de negocio", "REST API")
+
+' Sistema Principal to External Platforms
+Rel(crm_educativo, social_media, "Integra campañas de marketing social", "Social APIs")
+Rel(crm_educativo, google_workspace, "Sincroniza calendarios y emails", "Google APIs")
+Rel(crm_educativo, microsoft_365, "Integra con herramientas corporativas", "Microsoft Graph API")
+
+' Relaciones de External Systems entre sí (para contexto)
+Rel(snowflake, tableau, "Suministra datos para visualización", "Data Connector")
+Rel(aws_cloud, datadog, "Métricas de infraestructura", "CloudWatch Integration")
+Rel(vault, aws_cloud, "Gestión de secretos en cloud", "AWS Integration")
+
+' Layout hints para mejor organización
+student -[hidden]D- instructor
+instructor -[hidden]D- admin
+admin -[hidden]D- marketing
+
+stripe -[hidden]R- paypal
+paypal -[hidden]R- banks
+
+sendgrid -[hidden]R- twilio
+twilio -[hidden]R- whatsapp_business
+
+zoom -[hidden]R- webrtc
+webrtc -[hidden]R- aws_mediaconvert
+
+openai -[hidden]R- google_analytics
+google_analytics -[hidden]R- mixpanel
+
+aws_cloud -[hidden]D- cloudflare
+datadog -[hidden]R- vault
+vault -[hidden]R- auth0
+
+snowflake -[hidden]R- tableau
+social_media -[hidden]D- google_workspace
+google_workspace -[hidden]R- microsoft_365
+
+@enduml

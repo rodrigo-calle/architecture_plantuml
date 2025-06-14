@@ -1,0 +1,258 @@
+@startuml C4_Level2_Containers
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+' Configuración para mejorar el espaciado y líneas rectas
+!define TECHN_FONT_SIZE 10
+skinparam minClassWidth 120
+skinparam nodesep 100
+skinparam ranksep 120
+skinparam linetype ortho
+skinparam arrow {
+    FontSize 9
+    Color Black
+}
+skinparam packageStyle rectangle
+skinparam backgroundColor White
+skinparam componentStyle rectangle
+skinparam component {
+    BorderThickness 2
+    BorderColor Black
+}
+skinparam database {
+    BorderThickness 2
+    BorderColor DarkBlue
+}
+' Configuración adicional para espaciado de líneas
+skinparam DefaultTextAlignment center
+skinparam wrapWidth 200
+skinparam maxMessageSize 150
+
+title **Nivel 2: Contenedores - CRM Educativo**
+
+Person(student, "Estudiante", "Usuario que accede a cursos y contenido")
+Person(instructor, "Instructor", "Profesor que crea y gestiona cursos")
+Person(admin, "Administrador", "Gestión del sistema y usuarios")
+Person(marketing, "Marketing Manager", "Gestión de campañas y leads")
+Person(sales, "Sales Representative", "Gestiona clientes, oportunidades y pipeline")
+Person(support, "Soporte Técnico", "Atención al usuario")
+Person(content_creator, "Creador de Contenido", "Crea material educativo")
+Person(business_analyst, "Business Analyst", "Analiza métricas y genera reportes")
+
+System_Boundary(crm_system, "CRM Educativo") {
+    ' Frontend Layer
+    Container(public_web, "Web Pública", "Next.js 14 + TypeScript, Tailwind CSS", "Aplicación web pública")
+    Container(admin_dashboard, "Admin Dashboard", "Angular 17 + NgRx, Material UI", "Panel de administración")
+    Container(mobile_app, "Mobile App", "Flutter 3.x + Dart, GetX/Riverpod", "Aplicación móvil")
+    Container(pwa, "PWA", "Service Workers, IndexedDB", "Aplicación web progresiva")
+
+    ' Gateway Layer
+    Container(kong_gateway, "Kong Gateway", "Kong + Rate Limiting + Load Balancing", "API Gateway principal")
+    Container(traefik, "Traefik", "Reverse Proxy + SSL Termination", "Proxy reverso")
+    Container(graphql_gateway, "GraphQL Federation", "Apollo Federation + Schema Stitching", "Gateway GraphQL")
+    Container(keycloak, "Keycloak", "OAuth 2.0/OIDC + JWT + SSO", "Servicio de autenticación")
+
+    ' Core Services Layer - DDD Contexts
+    Container(auth_service, "Auth Service", "Spring Boot 3 + Spring Security + JWT", "Identity & Access Context")
+    Container(user_service, "User Service", "Node.js + Express + TypeScript + Prisma", "User Management Context")
+    Container(course_service, "Course Service", "Python + FastAPI + SQLAlchemy + Celery", "Learning Context")
+    Container(payment_service, "Payment Service", "Java + Spring Boot + Stripe SDK + Event Sourcing", "Payment Context")
+    Container(crm_service, "CRM Core", "C# + .NET 8 + Entity Framework + MediatR CQRS", "CRM Context")
+    Container(analytics_service, "Analytics Service", "Python + Django + Pandas + Apache Airflow", "Analytics Context")
+    Container(notification_service, "Notification Service", "Node.js + NestJS + Bull Queue + WebSocket", "Communication Context")
+    Container(ai_service, "AI & ML Service", "Python + FastAPI + LangChain + Hugging Face", "AI Context")
+
+    ' Data Layer
+    ContainerDb(postgres_db, "PostgreSQL 15", "OLTP Database + Connection Pooling + Read Replicas", "Almacenamiento principal")
+    ContainerDb(clickhouse_db, "ClickHouse", "OLAP Warehouse + Columnar Storage + Real-time Analytics", "Data Warehouse")
+    ContainerDb(redis_cluster, "Redis Cluster", "Cache Layer + Session Store + Rate Limiting", "Caché distribuido")
+    ContainerDb(elasticsearch, "Elasticsearch", "Search Engine + Full-text Search + ML Features", "Motor de búsqueda")
+
+    ' Messaging Layer
+    ContainerQueue(kafka_broker, "Apache Kafka", "Message Broker + Event Streaming + CQRS Events", "Bus de eventos")
+
+    ' Storage Layer
+    Container(s3_cloudfront, "AWS S3 + CloudFront", "File Storage + CDN + MediaConvert + Video Streaming", "Almacenamiento y distribución")
+
+    ' Business Intelligence Layer
+    Container(superset, "Apache Superset", "Dashboards + Data Visualization", "Dashboards empresariales")
+    Container(metabase, "Metabase", "Self-service BI + Reporting", "Reportes autoservicio")
+    Container(airflow, "Apache Airflow", "ETL/ELT Pipelines + Data Orchestration", "Orquestación de datos")
+}
+
+' External Systems
+System_Ext(openai, "OpenAI GPT-4", "Chatbot & AI")
+System_Ext(sendgrid, "SendGrid", "Email Marketing")
+System_Ext(whatsapp, "WhatsApp Business API", "Messaging")
+System_Ext(firebase, "Firebase", "Push Notifications")
+System_Ext(stripe_paypal, "Stripe/PayPal", "Payment Gateways")
+System_Ext(zoom_webrtc, "Zoom/WebRTC", "Video Conferencing")
+System_Ext(aws_cloud, "AWS Cloud", "Infraestructura cloud")
+System_Ext(k8s, "Kubernetes (EKS/GKE)", "Container Orchestration + Istio Service Mesh")
+System_Ext(monitoring, "Prometheus + Grafana", "Monitoring + Alerting + Dashboards")
+System_Ext(vault, "HashiCorp Vault", "Secrets Management + SOPS Encryption")
+
+' === RELACIONES PRINCIPALES ===
+
+' User to Frontend (organizadas por tipo de aplicación)
+' Web Pública - Usuarios externos
+Rel(student, public_web, "Cursos", "HTTPS")
+Rel(instructor, public_web, "Gestión", "HTTPS")
+Rel(content_creator, public_web, "Contenido", "HTTPS")
+
+' Admin Dashboard - Usuarios internos/administrativos
+Rel(admin, admin_dashboard, "Admin", "HTTPS")
+Rel(marketing, admin_dashboard, "Campañas", "HTTPS")
+Rel(sales, admin_dashboard, "CRM/Ventas", "HTTPS")
+Rel(support, admin_dashboard, "Soporte", "HTTPS")
+Rel(business_analyst, admin_dashboard, "Analytics", "HTTPS")
+Rel(instructor, admin_dashboard, "Panel", "HTTPS")
+Rel(content_creator, admin_dashboard, "Gestión", "HTTPS")
+
+' Mobile App - Usuarios móviles
+Rel(student, mobile_app, "Móvil", "HTTPS")
+Rel(instructor, mobile_app, "Móvil", "HTTPS")
+
+' PWA - Todos los usuarios (modo offline)
+Rel(student, pwa, "PWA", "HTTPS")
+
+' Frontend to Gateways (etiquetas más cortas)
+Rel(public_web, kong_gateway, "API REST", "JSON")
+Rel(public_web, graphql_gateway, "GraphQL", "HTTPS")
+
+Rel(admin_dashboard, kong_gateway, "Admin API", "JSON")
+Rel(admin_dashboard, graphql_gateway, "Admin GQL", "HTTPS")
+
+Rel(mobile_app, kong_gateway, "Mobile API", "JSON")
+Rel(mobile_app, graphql_gateway, "Mobile GQL", "HTTPS")
+
+Rel(pwa, kong_gateway, "PWA API", "JSON")
+
+' Gateway Layer (simplificadas)
+Rel(kong_gateway, traefik, "Load Balance", "HTTP")
+
+Rel(keycloak, auth_service, "OAuth2", "HTTPS")
+
+Rel(graphql_gateway, auth_service, "Fed Auth", "GQL")
+Rel(graphql_gateway, user_service, "Fed User", "GQL")
+Rel(graphql_gateway, course_service, "Fed Course", "GQL")
+Rel(graphql_gateway, crm_service, "Fed CRM", "GQL")
+
+' Gateway to Services (organizadas por grupos)
+Rel(traefik, auth_service, "Auth", "HTTP")
+Rel(traefik, user_service, "User", "HTTP")
+Rel(traefik, course_service, "Course", "HTTP")
+Rel(traefik, payment_service, "Payment", "HTTP")
+
+Rel(traefik, crm_service, "CRM", "HTTP")
+Rel(traefik, analytics_service, "Analytics", "HTTP")
+Rel(traefik, notification_service, "Notify", "HTTP")
+Rel(traefik, ai_service, "AI", "HTTP")
+
+' Services to Databases (agrupadas por servicio)
+' Auth Service
+Rel(auth_service, postgres_db, "Auth Data", "SQL")
+Rel(auth_service, redis_cluster, "Sessions", "Redis")
+
+' User Service
+Rel(user_service, postgres_db, "User Data", "SQL")
+Rel(user_service, redis_cluster, "User Cache", "Redis")
+Rel(user_service, elasticsearch, "User Search", "HTTP")
+
+' Course Service
+Rel(course_service, postgres_db, "Course Data", "SQL")
+Rel(course_service, redis_cluster, "Course Cache", "Redis")
+Rel(course_service, elasticsearch, "Course Search", "HTTP")
+Rel(course_service, s3_cloudfront, "Videos", "HTTPS")
+
+' Payment Service
+Rel(payment_service, postgres_db, "Transactions", "SQL")
+Rel(payment_service, redis_cluster, "Pay Cache", "Redis")
+
+' CRM Service
+Rel(crm_service, postgres_db, "CRM Data", "SQL")
+Rel(crm_service, clickhouse_db, "CRM Analytics", "HTTP")
+Rel(crm_service, redis_cluster, "CRM Cache", "Redis")
+
+' Analytics Service
+Rel(analytics_service, clickhouse_db, "Read Analytics", "HTTP")
+Rel(analytics_service, postgres_db, "Metadata", "SQL")
+
+' Notification Service
+Rel(notification_service, postgres_db, "Notify Log", "SQL")
+Rel(notification_service, redis_cluster, "Queues", "Redis")
+
+' AI Service
+Rel(ai_service, postgres_db, "AI Models", "SQL")
+Rel(ai_service, redis_cluster, "ML Cache", "Redis")
+Rel(ai_service, elasticsearch, "Vector Search", "HTTP")
+
+' Event Streaming (simplificadas)
+Rel(user_service, kafka_broker, "User Events", "Kafka")
+Rel(course_service, kafka_broker, "Course Events", "Kafka")
+Rel(payment_service, kafka_broker, "Pay Events", "Kafka")
+Rel(crm_service, kafka_broker, "CRM Events", "Kafka")
+
+Rel(analytics_service, kafka_broker, "Consume Events", "Kafka")
+Rel(notification_service, kafka_broker, "Consume Events", "Kafka")
+
+' Inter-service Communication (solo las principales)
+Rel(crm_service, user_service, "User API", "HTTP")
+Rel(crm_service, course_service, "Course API", "HTTP")
+Rel(ai_service, course_service, "Recommendations", "HTTP")
+Rel(notification_service, crm_service, "Campaign Triggers", "HTTP")
+
+' External Services (etiquetas cortas)
+Rel(ai_service, openai, "AI API", "HTTPS")
+Rel(notification_service, sendgrid, "Email", "HTTPS")
+Rel(notification_service, whatsapp, "WhatsApp", "HTTPS")
+Rel(notification_service, firebase, "Push", "HTTPS")
+Rel(payment_service, stripe_paypal, "Payments", "HTTPS")
+Rel(course_service, zoom_webrtc, "Video", "HTTPS")
+
+' Business Intelligence (simplificadas)
+Rel(superset, clickhouse_db, "Dashboards", "HTTP")
+Rel(metabase, postgres_db, "Reports", "SQL")
+Rel(metabase, clickhouse_db, "Analytics", "HTTP")
+Rel(airflow, postgres_db, "ETL Source", "SQL")
+Rel(airflow, clickhouse_db, "ETL Target", "HTTP")
+
+' Infrastructure (solo las principales)
+Rel(auth_service, k8s, "K8s Deploy", "Container")
+Rel(postgres_db, aws_cloud, "AWS RDS", "Cloud")
+Rel(s3_cloudfront, aws_cloud, "AWS Services", "Cloud")
+
+Rel(kong_gateway, monitoring, "Metrics", "HTTPS")
+Rel(auth_service, vault, "Secrets", "HTTPS")
+Rel(payment_service, vault, "Secrets", "HTTPS")
+
+' Content Distribution (simplificadas)
+Rel(public_web, s3_cloudfront, "Static", "HTTPS")
+Rel(mobile_app, s3_cloudfront, "Assets", "HTTPS")
+
+' Layout hints for better organization (más separación)
+public_web -[hidden]D- admin_dashboard
+admin_dashboard -[hidden]D- mobile_app
+mobile_app -[hidden]D- pwa
+
+kong_gateway -[hidden]R- traefik
+traefik -[hidden]R- graphql_gateway
+graphql_gateway -[hidden]R- keycloak
+
+auth_service -[hidden]R- user_service
+user_service -[hidden]R- course_service
+course_service -[hidden]R- payment_service
+payment_service -[hidden]D- crm_service
+crm_service -[hidden]R- analytics_service
+analytics_service -[hidden]R- notification_service
+notification_service -[hidden]R- ai_service
+
+postgres_db -[hidden]R- clickhouse_db
+clickhouse_db -[hidden]R- redis_cluster
+redis_cluster -[hidden]R- elasticsearch
+elasticsearch -[hidden]D- kafka_broker
+kafka_broker -[hidden]R- s3_cloudfront
+
+superset -[hidden]R- metabase
+metabase -[hidden]R- airflow
+
+@enduml

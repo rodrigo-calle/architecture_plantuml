@@ -1,0 +1,179 @@
+@startuml C4_Level3_Course_Service
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Configuración para mejorar espaciado
+skinparam minClassWidth 120
+skinparam nodesep 80
+skinparam ranksep 100
+skinparam linetype ortho
+skinparam arrow {
+    FontSize 9
+    Color Black
+}
+
+title **Nivel 3: Componentes - Course Service (Learning Context)**
+
+Person(instructor, "Instructor", "Crea y gestiona cursos")
+Person(student, "Estudiante", "Consume contenido educativo")
+System_Ext(api_gateway, "API Gateway", "Kong + Traefik")
+
+Container_Boundary(course_service, "Course Service - Python + FastAPI") {
+
+    ' API Layer (FastAPI Routes)
+    Component(course_router, "Course Router", "FastAPI Router", "CRUD de cursos")
+    Component(lesson_router, "Lesson Router", "FastAPI Router", "Gestión de lecciones")
+    Component(content_router, "Content Router", "FastAPI Router", "Gestión de contenido")
+    Component(enrollment_router, "Enrollment Router", "FastAPI Router", "Inscripciones")
+    Component(progress_router, "Progress Router", "FastAPI Router", "Progreso de estudiantes")
+    Component(search_router, "Search Router", "FastAPI Router", "Búsqueda de cursos")
+
+    ' Middleware Layer
+    Component(auth_middleware, "Auth Middleware", "FastAPI Middleware", "Autenticación JWT")
+    Component(cors_middleware, "CORS Middleware", "FastAPI CORS", "Control de CORS")
+    Component(rate_limit_middleware, "Rate Limit Middleware", "SlowAPI", "Control de velocidad")
+    Component(validation_middleware, "Validation Middleware", "Pydantic", "Validación de datos")
+
+    ' Application Layer (Use Cases)
+    Component(course_application_service, "Course Application Service", "Python Class", "Casos de uso de cursos")
+    Component(lesson_application_service, "Lesson Application Service", "Python Class", "Casos de uso de lecciones")
+    Component(enrollment_application_service, "Enrollment Application Service", "Python Class", "Casos de uso de inscripciones")
+    Component(progress_application_service, "Progress Application Service", "Python Class", "Casos de uso de progreso")
+    Component(content_processing_service, "Content Processing Service", "Python Class", "Procesamiento de contenido")
+
+    ' Domain Layer (DDD)
+    Component(course_aggregate, "Course Aggregate", "Domain Entity", "Agregado Curso con reglas de negocio")
+    Component(lesson_entity, "Lesson Entity", "Domain Entity", "Entidad Lección")
+    Component(enrollment_aggregate, "Enrollment Aggregate", "Domain Entity", "Agregado Inscripción")
+    Component(progress_entity, "Progress Entity", "Domain Entity", "Entidad Progreso")
+    Component(content_value_object, "Content VO", "Value Object", "Objeto valor Contenido")
+    Component(course_domain_service, "Course Domain Service", "Domain Service", "Reglas de negocio complejas")
+    Component(enrollment_policy, "Enrollment Policy", "Domain Policy", "Políticas de inscripción")
+
+    ' Repository Interfaces
+    Component(course_repository_interface, "ICourse Repository", "ABC Interface", "Contrato repositorio curso")
+    Component(lesson_repository_interface, "ILesson Repository", "ABC Interface", "Contrato repositorio lección")
+    Component(enrollment_repository_interface, "IEnrollment Repository", "ABC Interface", "Contrato repositorio inscripción")
+
+    ' Infrastructure Layer
+    Component(course_repository_impl, "Course Repository", "SQLAlchemy ORM", "Implementación repositorio curso")
+    Component(lesson_repository_impl, "Lesson Repository", "SQLAlchemy ORM", "Implementación repositorio lección")
+    Component(enrollment_repository_impl, "Enrollment Repository", "SQLAlchemy ORM", "Implementación repositorio inscripción")
+    Component(search_repository, "Search Repository", "Elasticsearch Client", "Repositorio de búsqueda")
+    Component(cache_service, "Cache Service", "Redis Client", "Servicio de caché")
+    Component(file_storage_service, "File Storage Service", "AWS S3 Client", "Almacenamiento de archivos")
+    Component(video_processing_service, "Video Processing Service", "FFmpeg + Celery", "Procesamiento de videos")
+    Component(event_publisher, "Event Publisher", "Kafka Producer", "Publicador de eventos")
+
+    ' Background Tasks
+    Component(video_task_worker, "Video Task Worker", "Celery Worker", "Worker de procesamiento de video")
+    Component(analytics_task_worker, "Analytics Task Worker", "Celery Worker", "Worker de analytics")
+    Component(notification_task_worker, "Notification Task Worker", "Celery Worker", "Worker de notificaciones")
+}
+
+' External Systems
+ContainerDb(postgres_db, "PostgreSQL", "Database", "Datos de cursos y lecciones")
+ContainerDb(redis_cache, "Redis Cluster", "Cache", "Caché de cursos")
+ContainerDb(elasticsearch, "Elasticsearch", "Search Engine", "Índice de búsqueda de cursos")
+ContainerQueue(kafka_broker, "Apache Kafka", "Event Broker", "Eventos de cursos")
+ContainerQueue(celery_broker, "Celery + RabbitMQ", "Task Queue", "Cola de tareas asíncronas")
+System_Ext(s3_storage, "AWS S3", "File Storage", "Videos y materiales")
+System_Ext(cloudfront, "AWS CloudFront", "CDN", "Distribución de contenido")
+System_Ext(zoom_api, "Zoom API", "Video Conferencing", "Clases en vivo")
+
+' === RELACIONES ===
+
+' External to API Layer
+Rel(instructor, api_gateway, "Course Management", "HTTPS")
+Rel(student, api_gateway, "Course Consumption", "HTTPS")
+Rel(api_gateway, course_router, "Course API", "HTTP/JSON")
+Rel(api_gateway, lesson_router, "Lesson API", "HTTP/JSON")
+Rel(api_gateway, content_router, "Content API", "HTTP/JSON")
+Rel(api_gateway, enrollment_router, "Enrollment API", "HTTP/JSON")
+Rel(api_gateway, progress_router, "Progress API", "HTTP/JSON")
+Rel(api_gateway, search_router, "Search API", "HTTP/JSON")
+
+' Middleware Flow
+Rel(course_router, auth_middleware, "Auth Check", "Dependency")
+Rel(lesson_router, validation_middleware, "Data Validation", "Pydantic")
+Rel(content_router, rate_limit_middleware, "Rate Control", "Dependency")
+Rel(enrollment_router, cors_middleware, "CORS Headers", "Middleware")
+
+' Routers to Application Services
+Rel(course_router, course_application_service, "Course Use Cases", "Dependency Injection")
+Rel(lesson_router, lesson_application_service, "Lesson Use Cases", "Dependency Injection")
+Rel(enrollment_router, enrollment_application_service, "Enrollment Use Cases", "Dependency Injection")
+Rel(progress_router, progress_application_service, "Progress Use Cases", "Dependency Injection")
+Rel(content_router, content_processing_service, "Content Processing", "Dependency Injection")
+
+' Application Services to Domain
+Rel(course_application_service, course_aggregate, "Course Domain Logic", "Domain Call")
+Rel(course_application_service, course_domain_service, "Complex Business Rules", "Domain Service")
+Rel(lesson_application_service, lesson_entity, "Lesson Logic", "Domain Call")
+Rel(enrollment_application_service, enrollment_aggregate, "Enrollment Logic", "Domain Call")
+Rel(enrollment_application_service, enrollment_policy, "Enrollment Rules", "Policy Check")
+Rel(progress_application_service, progress_entity, "Progress Logic", "Domain Call")
+Rel(content_processing_service, content_value_object, "Content Validation", "Value Object")
+
+' Application Services to Repository Interfaces
+Rel(course_application_service, course_repository_interface, "Course Persistence", "Interface")
+Rel(lesson_application_service, lesson_repository_interface, "Lesson Persistence", "Interface")
+Rel(enrollment_application_service, enrollment_repository_interface, "Enrollment Persistence", "Interface")
+
+' Repository Implementation
+Rel(course_repository_interface, course_repository_impl, "Implementation", "Dependency Injection")
+Rel(lesson_repository_interface, lesson_repository_impl, "Implementation", "Dependency Injection")
+Rel(enrollment_repository_interface, enrollment_repository_impl, "Implementation", "Dependency Injection")
+
+' Infrastructure to External Systems
+Rel(course_repository_impl, postgres_db, "Course Data", "SQL via SQLAlchemy")
+Rel(lesson_repository_impl, postgres_db, "Lesson Data", "SQL via SQLAlchemy")
+Rel(enrollment_repository_impl, postgres_db, "Enrollment Data", "SQL via SQLAlchemy")
+Rel(search_repository, elasticsearch, "Course Search Index", "HTTP/JSON")
+Rel(cache_service, redis_cache, "Cache Operations", "Redis Protocol")
+Rel(file_storage_service, s3_storage, "File Operations", "AWS S3 API")
+Rel(video_processing_service, celery_broker, "Video Tasks", "Celery Protocol")
+Rel(event_publisher, kafka_broker, "Course Events", "Kafka Protocol")
+
+' Application Services to Infrastructure
+Rel(course_application_service, cache_service, "Cache Course Data", "Service Call")
+Rel(course_application_service, event_publisher, "Publish Course Events", "Service Call")
+Rel(content_processing_service, file_storage_service, "Store Content", "Service Call")
+Rel(content_processing_service, video_processing_service, "Process Videos", "Service Call")
+Rel(lesson_application_service, search_repository, "Index Lessons", "Service Call")
+
+' Background Workers
+Rel(video_processing_service, video_task_worker, "Submit Video Tasks", "Celery")
+Rel(course_application_service, analytics_task_worker, "Submit Analytics Tasks", "Celery")
+Rel(enrollment_application_service, notification_task_worker, "Submit Notification Tasks", "Celery")
+
+Rel(video_task_worker, s3_storage, "Store Processed Videos", "AWS S3 API")
+Rel(video_task_worker, cloudfront, "Invalidate CDN Cache", "AWS CloudFront API")
+Rel(analytics_task_worker, kafka_broker, "Analytics Events", "Kafka Protocol")
+Rel(notification_task_worker, kafka_broker, "Notification Events", "Kafka Protocol")
+
+' External Integrations
+Rel(content_processing_service, zoom_api, "Create Live Classes", "Zoom API")
+Rel(video_task_worker, zoom_api, "Record Classes", "Zoom API")
+
+' Domain Events
+Rel(course_aggregate, event_publisher, "Course Domain Events", "Event Sourcing")
+Rel(enrollment_aggregate, event_publisher, "Enrollment Domain Events", "Event Sourcing")
+
+' Layout hints
+course_router -[hidden]R- lesson_router
+lesson_router -[hidden]R- content_router
+content_router -[hidden]R- enrollment_router
+
+course_application_service -[hidden]R- lesson_application_service
+lesson_application_service -[hidden]R- enrollment_application_service
+
+course_aggregate -[hidden]R- lesson_entity
+lesson_entity -[hidden]R- enrollment_aggregate
+
+course_repository_impl -[hidden]R- lesson_repository_impl
+lesson_repository_impl -[hidden]R- enrollment_repository_impl
+
+video_task_worker -[hidden]R- analytics_task_worker
+analytics_task_worker -[hidden]R- notification_task_worker
+
+@enduml

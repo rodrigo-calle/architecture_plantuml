@@ -1,0 +1,199 @@
+@startuml C4_Level3_Analytics_Service
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Configuración para mejorar espaciado
+skinparam minClassWidth 120
+skinparam nodesep 80
+skinparam ranksep 100
+skinparam linetype ortho
+skinparam arrow {
+    FontSize 9
+    Color Black
+}
+
+title **Nivel 3: Componentes - Analytics Service (Analytics Context)**
+
+Person(business_analyst, "Business Analyst", "Analiza métricas de negocio")
+Person(data_scientist, "Data Scientist", "Desarrolla modelos analíticos")
+System_Ext(api_gateway, "API Gateway", "Kong + Traefik")
+
+Container_Boundary(analytics_service, "Analytics Service - Python + Django") {
+
+    ' API Layer (Django REST Framework)
+    Component(metrics_view, "Metrics View", "Django REST API", "API de métricas")
+    Component(reports_view, "Reports View", "Django REST API", "API de reportes")
+    Component(dashboards_view, "Dashboards View", "Django REST API", "API de dashboards")
+    Component(data_export_view, "Data Export View", "Django REST API", "API de exportación")
+    Component(realtime_view, "Real-time View", "Django Channels", "API tiempo real")
+
+    ' Middleware Layer
+    Component(auth_middleware, "Auth Middleware", "Django Middleware", "Autenticación")
+    Component(rate_limit_middleware, "Rate Limit Middleware", "Django Rate Limit", "Control de velocidad")
+    Component(cache_middleware, "Cache Middleware", "Django Cache", "Middleware de caché")
+    Component(cors_middleware, "CORS Middleware", "Django CORS", "Control de CORS")
+
+    ' Application Layer (Services)
+    Component(metrics_service, "Metrics Service", "Django Service", "Servicio de métricas")
+    Component(reports_service, "Reports Service", "Django Service", "Generación de reportes")
+    Component(dashboard_service, "Dashboard Service", "Django Service", "Gestión de dashboards")
+    Component(data_processing_service, "Data Processing Service", "Pandas + NumPy", "Procesamiento de datos")
+    Component(ml_service, "ML Service", "Scikit-learn", "Servicio de machine learning")
+    Component(realtime_service, "Real-time Service", "Django Channels", "Servicio tiempo real")
+
+    ' Domain Layer (Analytics Domain)
+    Component(metric_aggregate, "Metric Aggregate", "Domain Entity", "Agregado Métrica")
+    Component(report_aggregate, "Report Aggregate", "Domain Entity", "Agregado Reporte")
+    Component(dashboard_aggregate, "Dashboard Aggregate", "Domain Entity", "Agregado Dashboard")
+    Component(data_point_value_object, "Data Point VO", "Value Object", "Punto de datos")
+    Component(time_series_value_object, "Time Series VO", "Value Object", "Serie temporal")
+    Component(analytics_domain_service, "Analytics Domain Service", "Domain Service", "Servicios de dominio analytics")
+    Component(data_quality_policy, "Data Quality Policy", "Domain Policy", "Políticas de calidad de datos")
+
+    ' Data Access Layer
+    Component(metrics_repository, "Metrics Repository", "Django ORM", "Repositorio de métricas")
+    Component(reports_repository, "Reports Repository", "Django ORM", "Repositorio de reportes")
+    Component(olap_repository, "OLAP Repository", "ClickHouse Client", "Repositorio OLAP")
+    Component(cache_repository, "Cache Repository", "Redis Client", "Repositorio de caché")
+    Component(search_repository, "Search Repository", "Elasticsearch Client", "Repositorio de búsqueda")
+
+    ' ETL/ELT Layer (Apache Airflow)
+    Component(data_ingestion_dag, "Data Ingestion DAG", "Airflow DAG", "DAG de ingesta de datos")
+    Component(data_transformation_dag, "Data Transformation DAG", "Airflow DAG", "DAG de transformación")
+    Component(data_quality_dag, "Data Quality DAG", "Airflow DAG", "DAG de calidad de datos")
+    Component(ml_pipeline_dag, "ML Pipeline DAG", "Airflow DAG", "DAG de pipeline ML")
+
+    ' Background Workers
+    Component(metrics_worker, "Metrics Worker", "Celery Worker", "Worker de métricas")
+    Component(reports_worker, "Reports Worker", "Celery Worker", "Worker de reportes")
+    Component(ml_worker, "ML Worker", "Celery Worker", "Worker de ML")
+    Component(notification_worker, "Notification Worker", "Celery Worker", "Worker de notificaciones")
+}
+
+' External Systems
+ContainerDb(postgres_db, "PostgreSQL", "Database", "Metadatos y configuración")
+ContainerDb(clickhouse_db, "ClickHouse", "OLAP Database", "Data warehouse analytics")
+ContainerDb(redis_cache, "Redis Cluster", "Cache", "Caché de analytics")
+ContainerDb(elasticsearch, "Elasticsearch", "Search Engine", "Índices de búsqueda")
+ContainerQueue(kafka_broker, "Apache Kafka", "Event Broker", "Eventos de analytics")
+ContainerQueue(celery_broker, "Celery + RabbitMQ", "Task Queue", "Cola de tareas")
+System_Ext(airflow, "Apache Airflow", "Workflow Orchestration", "Orquestación ETL")
+System_Ext(google_analytics, "Google Analytics", "Web Analytics", "Analytics web")
+System_Ext(snowflake, "Snowflake", "Cloud Data Warehouse", "Data warehouse externo")
+System_Ext(monitoring, "Prometheus", "Monitoring", "Métricas del sistema")
+
+' === RELACIONES ===
+
+' External to API Layer
+Rel(business_analyst, api_gateway, "Analytics Requests", "HTTPS")
+Rel(data_scientist, api_gateway, "ML Model Requests", "HTTPS")
+Rel(api_gateway, metrics_view, "Metrics API", "HTTP/JSON")
+Rel(api_gateway, reports_view, "Reports API", "HTTP/JSON")
+Rel(api_gateway, dashboards_view, "Dashboards API", "HTTP/JSON")
+Rel(api_gateway, data_export_view, "Export API", "HTTP/JSON")
+Rel(api_gateway, realtime_view, "Real-time API", "WebSocket")
+
+' Middleware Flow
+Rel(metrics_view, auth_middleware, "Auth Check", "Django Middleware")
+Rel(reports_view, rate_limit_middleware, "Rate Control", "Django Middleware")
+Rel(dashboards_view, cache_middleware, "Cache Response", "Django Middleware")
+Rel(data_export_view, cors_middleware, "CORS Headers", "Django Middleware")
+
+' API Views to Services
+Rel(metrics_view, metrics_service, "Metrics Logic", "Service Call")
+Rel(reports_view, reports_service, "Reports Logic", "Service Call")
+Rel(dashboards_view, dashboard_service, "Dashboard Logic", "Service Call")
+Rel(data_export_view, data_processing_service, "Data Export", "Service Call")
+Rel(realtime_view, realtime_service, "Real-time Data", "Service Call")
+
+' Services to Domain
+Rel(metrics_service, metric_aggregate, "Metric Domain Logic", "Domain Call")
+Rel(metrics_service, analytics_domain_service, "Analytics Rules", "Domain Service")
+Rel(reports_service, report_aggregate, "Report Logic", "Domain Call")
+Rel(dashboard_service, dashboard_aggregate, "Dashboard Logic", "Domain Call")
+Rel(data_processing_service, data_quality_policy, "Quality Check", "Policy Check")
+Rel(ml_service, analytics_domain_service, "ML Domain Logic", "Domain Service")
+
+' Domain to Value Objects
+Rel(metric_aggregate, data_point_value_object, "Data Points", "Value Object")
+Rel(metric_aggregate, time_series_value_object, "Time Series", "Value Object")
+Rel(report_aggregate, data_point_value_object, "Report Data", "Value Object")
+
+' Services to Repositories
+Rel(metrics_service, metrics_repository, "Metrics Persistence", "Repository Call")
+Rel(metrics_service, olap_repository, "OLAP Queries", "Repository Call")
+Rel(reports_service, reports_repository, "Reports Persistence", "Repository Call")
+Rel(dashboard_service, cache_repository, "Dashboard Cache", "Repository Call")
+Rel(data_processing_service, search_repository, "Search Data", "Repository Call")
+Rel(realtime_service, cache_repository, "Real-time Cache", "Repository Call")
+
+' Repositories to External Systems
+Rel(metrics_repository, postgres_db, "Metrics Metadata", "Django ORM")
+Rel(reports_repository, postgres_db, "Reports Config", "Django ORM")
+Rel(olap_repository, clickhouse_db, "Analytics Queries", "ClickHouse Protocol")
+Rel(cache_repository, redis_cache, "Cache Operations", "Redis Protocol")
+Rel(search_repository, elasticsearch, "Search Operations", "HTTP/JSON")
+
+' ETL/ELT DAGs
+Rel(data_ingestion_dag, kafka_broker, "Consume Events", "Kafka Consumer")
+Rel(data_ingestion_dag, postgres_db, "Source Data", "SQL")
+Rel(data_ingestion_dag, clickhouse_db, "Load Data", "ClickHouse")
+Rel(data_transformation_dag, clickhouse_db, "Transform Data", "SQL")
+Rel(data_quality_dag, clickhouse_db, "Quality Checks", "SQL")
+Rel(ml_pipeline_dag, clickhouse_db, "ML Data", "SQL")
+
+' Background Workers
+Rel(metrics_service, metrics_worker, "Submit Metrics Tasks", "Celery")
+Rel(reports_service, reports_worker, "Submit Report Tasks", "Celery")
+Rel(ml_service, ml_worker, "Submit ML Tasks", "Celery")
+Rel(realtime_service, notification_worker, "Submit Notifications", "Celery")
+
+Rel(metrics_worker, celery_broker, "Metrics Queue", "AMQP")
+Rel(reports_worker, celery_broker, "Reports Queue", "AMQP")
+Rel(ml_worker, celery_broker, "ML Queue", "AMQP")
+Rel(notification_worker, celery_broker, "Notification Queue", "AMQP")
+
+' Workers to External Systems
+Rel(metrics_worker, clickhouse_db, "Store Metrics", "ClickHouse")
+Rel(reports_worker, snowflake, "Export Reports", "Snowflake API")
+Rel(ml_worker, redis_cache, "Cache ML Models", "Redis")
+Rel(notification_worker, kafka_broker, "Analytics Events", "Kafka Producer")
+
+' External Integrations
+Rel(data_ingestion_dag, google_analytics, "Web Analytics Data", "Google Analytics API")
+Rel(data_transformation_dag, snowflake, "External Data", "Snowflake API")
+Rel(ml_pipeline_dag, monitoring, "ML Metrics", "Prometheus API")
+
+' Airflow Integration
+Rel(airflow, data_ingestion_dag, "Schedule Ingestion", "Airflow Scheduler")
+Rel(airflow, data_transformation_dag, "Schedule Transform", "Airflow Scheduler")
+Rel(airflow, data_quality_dag, "Schedule Quality", "Airflow Scheduler")
+Rel(airflow, ml_pipeline_dag, "Schedule ML", "Airflow Scheduler")
+
+' Cross-cutting Concerns
+Rel(metrics_service, monitoring, "Service Metrics", "Prometheus")
+Rel(reports_service, monitoring, "Report Metrics", "Prometheus")
+Rel(ml_service, monitoring, "ML Metrics", "Prometheus")
+
+' Event Publishing
+Rel(metric_aggregate, kafka_broker, "Metric Events", "Domain Events")
+Rel(report_aggregate, kafka_broker, "Report Events", "Domain Events")
+Rel(dashboard_aggregate, kafka_broker, "Dashboard Events", "Domain Events")
+
+' Layout hints
+metrics_view -[hidden]R- reports_view
+reports_view -[hidden]R- dashboards_view
+dashboards_view -[hidden]R- data_export_view
+
+metrics_service -[hidden]R- reports_service
+reports_service -[hidden]R- dashboard_service
+
+metric_aggregate -[hidden]R- report_aggregate
+report_aggregate -[hidden]R- dashboard_aggregate
+
+data_ingestion_dag -[hidden]R- data_transformation_dag
+data_transformation_dag -[hidden]R- data_quality_dag
+
+metrics_worker -[hidden]R- reports_worker
+reports_worker -[hidden]R- ml_worker
+
+@enduml

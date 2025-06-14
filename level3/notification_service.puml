@@ -1,0 +1,214 @@
+@startuml C4_Level3_Notification_Service
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Configuración para mejorar espaciado
+skinparam minClassWidth 120
+skinparam nodesep 80
+skinparam ranksep 100
+skinparam linetype ortho
+skinparam arrow {
+    FontSize 9
+    Color Black
+}
+
+title **Nivel 3: Componentes - Notification Service (Communication Context)**
+
+Person(user, "Usuario", "Recibe notificaciones")
+Person(admin, "Administrador", "Gestiona notificaciones")
+System_Ext(api_gateway, "API Gateway", "Kong + Traefik")
+
+Container_Boundary(notification_service, "Notification Service - Node.js + NestJS") {
+
+    ' API Controllers Layer
+    Component(notification_controller, "Notification Controller", "NestJS Controller", "CRUD de notificaciones")
+    Component(template_controller, "Template Controller", "NestJS Controller", "Gestión de plantillas")
+    Component(campaign_controller, "Campaign Controller", "NestJS Controller", "Gestión de campañas")
+    Component(webhook_controller, "Webhook Controller", "NestJS Controller", "Webhooks de proveedores")
+    Component(websocket_gateway, "WebSocket Gateway", "NestJS WebSocket", "Notificaciones en tiempo real")
+
+    ' Guards & Middleware Layer
+    Component(auth_guard, "Auth Guard", "NestJS Guard", "Autenticación JWT")
+    Component(rate_limit_guard, "Rate Limit Guard", "NestJS Throttler", "Control de velocidad")
+    Component(validation_pipe, "Validation Pipe", "Class Validator", "Validación de datos")
+    Component(logging_interceptor, "Logging Interceptor", "NestJS Interceptor", "Logging de requests")
+
+    ' Application Layer (Services)
+    Component(notification_service_impl, "Notification Service", "NestJS Service", "Servicio principal de notificaciones")
+    Component(template_service, "Template Service", "NestJS Service", "Gestión de plantillas")
+    Component(campaign_service, "Campaign Service", "NestJS Service", "Gestión de campañas")
+    Component(delivery_service, "Delivery Service", "NestJS Service", "Servicio de entrega")
+    Component(personalization_service, "Personalization Service", "NestJS Service", "Personalización de mensajes")
+    Component(analytics_service, "Analytics Service", "NestJS Service", "Analytics de notificaciones")
+
+    ' Domain Layer (DDD)
+    Component(notification_aggregate, "Notification Aggregate", "Domain Entity", "Agregado Notificación")
+    Component(template_aggregate, "Template Aggregate", "Domain Entity", "Agregado Plantilla")
+    Component(campaign_aggregate, "Campaign Aggregate", "Domain Entity", "Agregado Campaña")
+    Component(recipient_entity, "Recipient Entity", "Domain Entity", "Entidad Destinatario")
+    Component(message_value_object, "Message VO", "Value Object", "Objeto valor Mensaje")
+    Component(delivery_status_value_object, "Delivery Status VO", "Value Object", "Estado de entrega")
+    Component(notification_domain_service, "Notification Domain Service", "Domain Service", "Servicios de dominio")
+    Component(delivery_policy, "Delivery Policy", "Domain Policy", "Políticas de entrega")
+    Component(personalization_policy, "Personalization Policy", "Domain Policy", "Políticas de personalización")
+
+    ' Repository Interfaces
+    Component(notification_repository_interface, "INotification Repository", "Interface", "Contrato repositorio notificación")
+    Component(template_repository_interface, "ITemplate Repository", "Interface", "Contrato repositorio plantilla")
+    Component(campaign_repository_interface, "ICampaign Repository", "Interface", "Contrato repositorio campaña")
+
+    ' Infrastructure Layer
+    Component(notification_repository_impl, "Notification Repository", "Prisma ORM", "Implementación repositorio notificación")
+    Component(template_repository_impl, "Template Repository", "Prisma ORM", "Implementación repositorio plantilla")
+    Component(campaign_repository_impl, "Campaign Repository", "Prisma ORM", "Implementación repositorio campaña")
+    Component(email_provider, "Email Provider", "SendGrid SDK", "Proveedor de email")
+    Component(sms_provider, "SMS Provider", "Twilio SDK", "Proveedor de SMS")
+    Component(push_provider, "Push Provider", "Firebase Admin SDK", "Proveedor de push notifications")
+    Component(whatsapp_provider, "WhatsApp Provider", "WhatsApp Business API", "Proveedor de WhatsApp")
+    Component(cache_service, "Cache Service", "Redis Client", "Servicio de caché")
+    Component(queue_service, "Queue Service", "Bull Queue + Redis", "Servicio de colas")
+    Component(event_publisher, "Event Publisher", "Kafka Producer", "Publicador de eventos")
+
+    ' Background Processors
+    Component(email_processor, "Email Processor", "Bull Worker", "Procesador de emails")
+    Component(sms_processor, "SMS Processor", "Bull Worker", "Procesador de SMS")
+    Component(push_processor, "Push Processor", "Bull Worker", "Procesador de push")
+    Component(whatsapp_processor, "WhatsApp Processor", "Bull Worker", "Procesador de WhatsApp")
+    Component(analytics_processor, "Analytics Processor", "Bull Worker", "Procesador de analytics")
+    Component(cleanup_processor, "Cleanup Processor", "Bull Worker", "Procesador de limpieza")
+}
+
+' External Systems
+ContainerDb(postgres_db, "PostgreSQL", "Database", "Datos de notificaciones y logs")
+ContainerDb(redis_cache, "Redis Cluster", "Cache & Queue", "Caché y colas")
+ContainerQueue(kafka_broker, "Apache Kafka", "Event Broker", "Eventos de notificaciones")
+System_Ext(sendgrid, "SendGrid", "Email Service", "Servicio de email")
+System_Ext(twilio, "Twilio", "SMS Service", "Servicio de SMS")
+System_Ext(firebase, "Firebase", "Push Notification Service", "Servicio de push notifications")
+System_Ext(whatsapp_api, "WhatsApp Business API", "WhatsApp Service", "Servicio de WhatsApp")
+System_Ext(monitoring, "Prometheus", "Monitoring", "Métricas del sistema")
+
+' === RELACIONES ===
+
+' External to Controllers
+Rel(user, websocket_gateway, "Real-time Connection", "WebSocket")
+Rel(admin, api_gateway, "Notification Management", "HTTPS")
+Rel(api_gateway, notification_controller, "Notification API", "HTTP/JSON")
+Rel(api_gateway, template_controller, "Template API", "HTTP/JSON")
+Rel(api_gateway, campaign_controller, "Campaign API", "HTTP/JSON")
+
+' External Webhooks
+Rel(sendgrid, webhook_controller, "Email Webhooks", "HTTPS")
+Rel(twilio, webhook_controller, "SMS Webhooks", "HTTPS")
+Rel(firebase, webhook_controller, "Push Webhooks", "HTTPS")
+Rel(whatsapp_api, webhook_controller, "WhatsApp Webhooks", "HTTPS")
+
+' Guards & Middleware Flow
+Rel(notification_controller, auth_guard, "Auth Check", "NestJS Guard")
+Rel(template_controller, rate_limit_guard, "Rate Control", "NestJS Throttler")
+Rel(campaign_controller, validation_pipe, "Data Validation", "Class Validator")
+Rel(webhook_controller, logging_interceptor, "Request Logging", "NestJS Interceptor")
+
+' Controllers to Services
+Rel(notification_controller, notification_service_impl, "Notification Logic", "Dependency Injection")
+Rel(template_controller, template_service, "Template Logic", "Dependency Injection")
+Rel(campaign_controller, campaign_service, "Campaign Logic", "Dependency Injection")
+Rel(webhook_controller, delivery_service, "Delivery Status Update", "Dependency Injection")
+Rel(websocket_gateway, notification_service_impl, "Real-time Notifications", "Dependency Injection")
+
+' Services to Domain
+Rel(notification_service_impl, notification_aggregate, "Notification Domain Logic", "Domain Call")
+Rel(notification_service_impl, notification_domain_service, "Complex Notification Rules", "Domain Service")
+Rel(template_service, template_aggregate, "Template Logic", "Domain Call")
+Rel(campaign_service, campaign_aggregate, "Campaign Logic", "Domain Call")
+Rel(delivery_service, notification_aggregate, "Delivery Logic", "Domain Call")
+Rel(delivery_service, delivery_policy, "Delivery Rules", "Policy Check")
+Rel(personalization_service, personalization_policy, "Personalization Rules", "Policy Check")
+
+' Domain to Value Objects
+Rel(notification_aggregate, message_value_object, "Message Content", "Value Object")
+Rel(notification_aggregate, delivery_status_value_object, "Delivery Status", "Value Object")
+Rel(recipient_entity, message_value_object, "Recipient Message", "Value Object")
+
+' Services to Repository Interfaces
+Rel(notification_service_impl, notification_repository_interface, "Notification Persistence", "Interface")
+Rel(template_service, template_repository_interface, "Template Persistence", "Interface")
+Rel(campaign_service, campaign_repository_interface, "Campaign Persistence", "Interface")
+
+' Repository Implementation
+Rel(notification_repository_interface, notification_repository_impl, "Implementation", "Dependency Injection")
+Rel(template_repository_interface, template_repository_impl, "Implementation", "Dependency Injection")
+Rel(campaign_repository_interface, campaign_repository_impl, "Implementation", "Dependency Injection")
+
+' Repositories to Database
+Rel(notification_repository_impl, postgres_db, "Notification Data", "SQL via Prisma")
+Rel(template_repository_impl, postgres_db, "Template Data", "SQL via Prisma")
+Rel(campaign_repository_impl, postgres_db, "Campaign Data", "SQL via Prisma")
+
+' Services to Infrastructure
+Rel(notification_service_impl, cache_service, "Cache Notifications", "Service Call")
+Rel(notification_service_impl, queue_service, "Queue Delivery", "Service Call")
+Rel(delivery_service, event_publisher, "Publish Delivery Events", "Service Call")
+Rel(personalization_service, cache_service, "Cache User Preferences", "Service Call")
+Rel(analytics_service, event_publisher, "Publish Analytics Events", "Service Call")
+
+' Queue Service to Processors
+Rel(queue_service, email_processor, "Email Queue", "Bull Queue")
+Rel(queue_service, sms_processor, "SMS Queue", "Bull Queue")
+Rel(queue_service, push_processor, "Push Queue", "Bull Queue")
+Rel(queue_service, whatsapp_processor, "WhatsApp Queue", "Bull Queue")
+Rel(queue_service, analytics_processor, "Analytics Queue", "Bull Queue")
+Rel(queue_service, cleanup_processor, "Cleanup Queue", "Bull Queue")
+
+' Processors to Providers
+Rel(email_processor, email_provider, "Send Email", "Service Call")
+Rel(sms_processor, sms_provider, "Send SMS", "Service Call")
+Rel(push_processor, push_provider, "Send Push", "Service Call")
+Rel(whatsapp_processor, whatsapp_provider, "Send WhatsApp", "Service Call")
+
+' Providers to External Services
+Rel(email_provider, sendgrid, "Email API", "SendGrid API")
+Rel(sms_provider, twilio, "SMS API", "Twilio API")
+Rel(push_provider, firebase, "Push API", "Firebase Admin API")
+Rel(whatsapp_provider, whatsapp_api, "WhatsApp API", "WhatsApp Business API")
+
+' Infrastructure to External Systems
+Rel(cache_service, redis_cache, "Cache Operations", "Redis Protocol")
+Rel(queue_service, redis_cache, "Queue Operations", "Bull + Redis")
+Rel(event_publisher, kafka_broker, "Notification Events", "Kafka Protocol")
+
+' Background Processing
+Rel(analytics_processor, postgres_db, "Store Analytics", "SQL")
+Rel(cleanup_processor, postgres_db, "Cleanup Old Data", "SQL")
+
+' Event Consumption (from other services)
+Rel(kafka_broker, notification_service_impl, "Consume Events", "Kafka Consumer")
+
+' Monitoring
+Rel(notification_service_impl, monitoring, "Notification Metrics", "Prometheus")
+Rel(delivery_service, monitoring, "Delivery Metrics", "Prometheus")
+Rel(email_processor, monitoring, "Email Metrics", "Prometheus")
+Rel(sms_processor, monitoring, "SMS Metrics", "Prometheus")
+
+' Domain Events
+Rel(notification_aggregate, event_publisher, "Notification Domain Events", "Domain Events")
+Rel(campaign_aggregate, event_publisher, "Campaign Domain Events", "Domain Events")
+
+' Layout hints
+notification_controller -[hidden]R- template_controller
+template_controller -[hidden]R- campaign_controller
+campaign_controller -[hidden]R- webhook_controller
+
+notification_service_impl -[hidden]R- template_service
+template_service -[hidden]R- campaign_service
+
+notification_aggregate -[hidden]R- template_aggregate
+template_aggregate -[hidden]R- campaign_aggregate
+
+email_processor -[hidden]R- sms_processor
+sms_processor -[hidden]R- push_processor
+push_processor -[hidden]R- whatsapp_processor
+
+email_provider -[hidden]R- sms_provider
+sms_provider -[hidden]R- push_provider
+
+@enduml

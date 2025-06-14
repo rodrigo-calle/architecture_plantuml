@@ -1,0 +1,197 @@
+@startuml C4_Level3_CRM_Service
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Configuración para mejorar espaciado
+skinparam minClassWidth 120
+skinparam nodesep 80
+skinparam ranksep 100
+skinparam linetype ortho
+skinparam arrow {
+    FontSize 9
+    Color Black
+}
+
+title **Nivel 3: Componentes - CRM Service (CRM Context)**
+
+Person(marketing, "Marketing", "Gestiona campañas y leads")
+Person(sales, "Sales", "Gestiona clientes y ventas")
+System_Ext(api_gateway, "API Gateway", "Kong + Traefik")
+
+Container_Boundary(crm_service, "CRM Service - C# + .NET 8") {
+
+    ' API Controllers Layer
+    Component(lead_controller, "Lead Controller", "ASP.NET Core MVC", "Gestión de leads")
+    Component(customer_controller, "Customer Controller", "ASP.NET Core MVC", "Gestión de clientes")
+    Component(campaign_controller, "Campaign Controller", "ASP.NET Core MVC", "Gestión de campañas")
+    Component(opportunity_controller, "Opportunity Controller", "ASP.NET Core MVC", "Gestión de oportunidades")
+    Component(pipeline_controller, "Pipeline Controller", "ASP.NET Core MVC", "Gestión de pipeline de ventas")
+    Component(analytics_controller, "Analytics Controller", "ASP.NET Core MVC", "Analytics de CRM")
+
+    ' Middleware Layer
+    Component(auth_middleware, "Auth Middleware", "ASP.NET Core Middleware", "Autenticación y autorización")
+    Component(validation_middleware, "Validation Middleware", "FluentValidation", "Validación de datos")
+    Component(exception_middleware, "Exception Middleware", "Custom Middleware", "Manejo de excepciones")
+    Component(logging_middleware, "Logging Middleware", "Serilog", "Logging estructurado")
+
+    ' Application Layer (CQRS + MediatR)
+    Component(lead_command_handler, "Lead Command Handler", "MediatR Handler", "Comandos de leads")
+    Component(lead_query_handler, "Lead Query Handler", "MediatR Handler", "Consultas de leads")
+    Component(customer_command_handler, "Customer Command Handler", "MediatR Handler", "Comandos de clientes")
+    Component(customer_query_handler, "Customer Query Handler", "MediatR Handler", "Consultas de clientes")
+    Component(campaign_command_handler, "Campaign Command Handler", "MediatR Handler", "Comandos de campañas")
+    Component(campaign_query_handler, "Campaign Query Handler", "MediatR Handler", "Consultas de campañas")
+    Component(pipeline_service, "Pipeline Service", "Application Service", "Servicio de pipeline")
+    Component(analytics_service, "Analytics Service", "Application Service", "Servicio de analytics")
+
+    ' Domain Layer (DDD)
+    Component(lead_aggregate, "Lead Aggregate", "Domain Entity", "Agregado Lead con reglas de negocio")
+    Component(customer_aggregate, "Customer Aggregate", "Domain Entity", "Agregado Customer")
+    Component(campaign_aggregate, "Campaign Aggregate", "Domain Entity", "Agregado Campaign")
+    Component(opportunity_aggregate, "Opportunity Aggregate", "Domain Entity", "Agregado Opportunity")
+    Component(contact_info_value_object, "Contact Info VO", "Value Object", "Información de contacto")
+    Component(lead_score_value_object, "Lead Score VO", "Value Object", "Puntuación de lead")
+    Component(crm_domain_service, "CRM Domain Service", "Domain Service", "Servicios de dominio CRM")
+    Component(lead_qualification_policy, "Lead Qualification Policy", "Domain Policy", "Políticas de calificación")
+    Component(campaign_effectiveness_policy, "Campaign Effectiveness Policy", "Domain Policy", "Políticas de efectividad")
+
+    ' Repository Interfaces
+    Component(lead_repository_interface, "ILead Repository", "Interface", "Contrato repositorio lead")
+    Component(customer_repository_interface, "ICustomer Repository", "Interface", "Contrato repositorio customer")
+    Component(campaign_repository_interface, "ICampaign Repository", "Interface", "Contrato repositorio campaign")
+    Component(opportunity_repository_interface, "IOpportunity Repository", "Interface", "Contrato repositorio opportunity")
+
+    ' Infrastructure Layer
+    Component(lead_repository_impl, "Lead Repository", "Entity Framework Core", "Implementación repositorio lead")
+    Component(customer_repository_impl, "Customer Repository", "Entity Framework Core", "Implementación repositorio customer")
+    Component(campaign_repository_impl, "Campaign Repository", "Entity Framework Core", "Implementación repositorio campaign")
+    Component(opportunity_repository_impl, "Opportunity Repository", "Entity Framework Core", "Implementación repositorio opportunity")
+    Component(cache_service, "Cache Service", "IMemoryCache + Redis", "Servicio de caché")
+    Component(event_publisher, "Event Publisher", "MediatR + Kafka", "Publicador de eventos")
+    Component(email_service, "Email Service", "SendGrid SDK", "Servicio de email")
+    Component(analytics_repository, "Analytics Repository", "ClickHouse Client", "Repositorio de analytics")
+    Component(external_integrations, "External Integrations", "HTTP Clients", "Integraciones externas")
+}
+
+' External Systems
+ContainerDb(postgres_db, "PostgreSQL", "Database", "Datos operacionales de CRM")
+ContainerDb(clickhouse_db, "ClickHouse", "Analytics Database", "Datos de analytics")
+ContainerDb(redis_cache, "Redis Cluster", "Cache", "Caché de CRM")
+ContainerQueue(kafka_broker, "Apache Kafka", "Event Broker", "Eventos de CRM")
+System_Ext(sendgrid, "SendGrid", "Email Service", "Envío de emails")
+System_Ext(user_service, "User Service", "Gestión de usuarios")
+System_Ext(course_service, "Course Service", "Gestión de cursos")
+System_Ext(payment_service, "Payment Service", "Gestión de pagos")
+System_Ext(monitoring, "Prometheus", "Monitoring", "Métricas")
+
+' === RELACIONES ===
+
+' External to Controllers
+Rel(marketing, api_gateway, "Campaign Management", "HTTPS")
+Rel(sales, api_gateway, "Sales Management", "HTTPS")
+Rel(api_gateway, lead_controller, "Lead API", "HTTP/JSON")
+Rel(api_gateway, customer_controller, "Customer API", "HTTP/JSON")
+Rel(api_gateway, campaign_controller, "Campaign API", "HTTP/JSON")
+Rel(api_gateway, opportunity_controller, "Opportunity API", "HTTP/JSON")
+Rel(api_gateway, pipeline_controller, "Pipeline API", "HTTP/JSON")
+Rel(api_gateway, analytics_controller, "Analytics API", "HTTP/JSON")
+
+' Middleware Flow
+Rel(lead_controller, auth_middleware, "Auth Check", "Middleware Pipeline")
+Rel(customer_controller, validation_middleware, "Data Validation", "FluentValidation")
+Rel(campaign_controller, exception_middleware, "Exception Handling", "Middleware Pipeline")
+Rel(opportunity_controller, logging_middleware, "Structured Logging", "Serilog")
+
+' Controllers to CQRS Handlers (via MediatR)
+Rel(lead_controller, lead_command_handler, "Lead Commands", "MediatR")
+Rel(lead_controller, lead_query_handler, "Lead Queries", "MediatR")
+Rel(customer_controller, customer_command_handler, "Customer Commands", "MediatR")
+Rel(customer_controller, customer_query_handler, "Customer Queries", "MediatR")
+Rel(campaign_controller, campaign_command_handler, "Campaign Commands", "MediatR")
+Rel(campaign_controller, campaign_query_handler, "Campaign Queries", "MediatR")
+Rel(pipeline_controller, pipeline_service, "Pipeline Logic", "Service Call")
+Rel(analytics_controller, analytics_service, "Analytics Logic", "Service Call")
+
+' CQRS Handlers to Domain
+Rel(lead_command_handler, lead_aggregate, "Lead Domain Logic", "Domain Call")
+Rel(lead_command_handler, lead_qualification_policy, "Qualification Rules", "Policy Check")
+Rel(customer_command_handler, customer_aggregate, "Customer Domain Logic", "Domain Call")
+Rel(campaign_command_handler, campaign_aggregate, "Campaign Domain Logic", "Domain Call")
+Rel(campaign_command_handler, campaign_effectiveness_policy, "Effectiveness Rules", "Policy Check")
+Rel(lead_query_handler, crm_domain_service, "Complex Queries", "Domain Service")
+
+' Services to Domain
+Rel(pipeline_service, opportunity_aggregate, "Opportunity Logic", "Domain Call")
+Rel(pipeline_service, crm_domain_service, "Pipeline Rules", "Domain Service")
+Rel(analytics_service, crm_domain_service, "Analytics Logic", "Domain Service")
+
+' Domain to Value Objects
+Rel(lead_aggregate, contact_info_value_object, "Contact Data", "Value Object")
+Rel(lead_aggregate, lead_score_value_object, "Lead Scoring", "Value Object")
+Rel(customer_aggregate, contact_info_value_object, "Customer Contact", "Value Object")
+
+' CQRS Handlers to Repository Interfaces
+Rel(lead_command_handler, lead_repository_interface, "Lead Persistence", "Interface")
+Rel(customer_command_handler, customer_repository_interface, "Customer Persistence", "Interface")
+Rel(campaign_command_handler, campaign_repository_interface, "Campaign Persistence", "Interface")
+Rel(lead_query_handler, lead_repository_interface, "Lead Queries", "Interface")
+Rel(customer_query_handler, customer_repository_interface, "Customer Queries", "Interface")
+Rel(campaign_query_handler, campaign_repository_interface, "Campaign Queries", "Interface")
+
+' Services to Repository Interfaces
+Rel(pipeline_service, opportunity_repository_interface, "Opportunity Persistence", "Interface")
+Rel(analytics_service, analytics_repository, "Analytics Data", "Direct Call")
+
+' Repository Implementation
+Rel(lead_repository_interface, lead_repository_impl, "Implementation", "Dependency Injection")
+Rel(customer_repository_interface, customer_repository_impl, "Implementation", "Dependency Injection")
+Rel(campaign_repository_interface, campaign_repository_impl, "Implementation", "Dependency Injection")
+Rel(opportunity_repository_interface, opportunity_repository_impl, "Implementation", "Dependency Injection")
+
+' Infrastructure to External Systems
+Rel(lead_repository_impl, postgres_db, "Lead Data", "SQL via EF Core")
+Rel(customer_repository_impl, postgres_db, "Customer Data", "SQL via EF Core")
+Rel(campaign_repository_impl, postgres_db, "Campaign Data", "SQL via EF Core")
+Rel(opportunity_repository_impl, postgres_db, "Opportunity Data", "SQL via EF Core")
+Rel(analytics_repository, clickhouse_db, "Analytics Data", "ClickHouse Protocol")
+Rel(cache_service, redis_cache, "Cache Operations", "Redis Protocol")
+Rel(event_publisher, kafka_broker, "CRM Events", "Kafka Protocol")
+Rel(email_service, sendgrid, "Send Emails", "SendGrid API")
+
+' CQRS Handlers to Infrastructure
+Rel(lead_command_handler, cache_service, "Cache Lead Data", "Service Call")
+Rel(customer_command_handler, event_publisher, "Publish Customer Events", "MediatR + Kafka")
+Rel(campaign_command_handler, email_service, "Send Campaign Emails", "Service Call")
+Rel(pipeline_service, event_publisher, "Publish Pipeline Events", "MediatR + Kafka")
+Rel(analytics_service, cache_service, "Cache Analytics", "Service Call")
+
+' External Service Integration
+Rel(external_integrations, user_service, "User Data", "HTTP/REST")
+Rel(external_integrations, course_service, "Course Data", "HTTP/REST")
+Rel(external_integrations, payment_service, "Payment Data", "HTTP/REST")
+Rel(customer_query_handler, external_integrations, "External Data", "Service Call")
+Rel(analytics_service, external_integrations, "Cross-service Analytics", "Service Call")
+
+' Monitoring
+Rel(analytics_service, monitoring, "CRM Metrics", "HTTP/Prometheus")
+Rel(pipeline_service, monitoring, "Pipeline Metrics", "HTTP/Prometheus")
+
+' Domain Events
+Rel(lead_aggregate, event_publisher, "Lead Domain Events", "Domain Events")
+Rel(customer_aggregate, event_publisher, "Customer Domain Events", "Domain Events")
+Rel(campaign_aggregate, event_publisher, "Campaign Domain Events", "Domain Events")
+
+' Layout hints
+lead_controller -[hidden]R- customer_controller
+customer_controller -[hidden]R- campaign_controller
+campaign_controller -[hidden]R- opportunity_controller
+
+lead_command_handler -[hidden]R- lead_query_handler
+customer_command_handler -[hidden]R- customer_query_handler
+
+lead_aggregate -[hidden]R- customer_aggregate
+customer_aggregate -[hidden]R- campaign_aggregate
+
+lead_repository_impl -[hidden]R- customer_repository_impl
+customer_repository_impl -[hidden]R- campaign_repository_impl
+
+@enduml

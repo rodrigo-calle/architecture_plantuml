@@ -1,0 +1,132 @@
+@startuml C4_Level3_Component_AI_Service
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title **Nivel 3: Componentes - AI Service**
+
+Container(api_gateway, "API Gateway", "Kong")
+ContainerDb(postgres_db, "PostgreSQL", "Database")
+ContainerDb(redis_cache, "Redis", "Cache")
+ContainerQueue(kafka_broker, "Apache Kafka", "Event Broker")
+System_Ext(openai_api, "OpenAI API", "Language Models")
+System_Ext(huggingface_api, "HuggingFace API", "NLP Models")
+System_Ext(pinecone, "Pinecone", "Vector Database")
+
+System_Boundary(ai_service, "AI Service") {
+    ' API Layer
+    Component(chatbot_controller, "ChatbotController", "FastAPI", "Endpoints del chatbot")
+    Component(advisor_controller, "AdvisorController", "FastAPI", "Endpoints de asesoría")
+    
+    ' Application Layer
+    Component(chatbot_orchestrator, "ChatbotOrchestrator", "Python", "Orquestación del chatbot")
+    Component(advisor_orchestrator, "AdvisorOrchestrator", "Python", "Orquestación de asesoría")
+    
+    ' Domain Layer
+    Component(ai_events, "AI Events", "Domain Events", "Eventos de IA")
+    
+    ' NLP Layer
+    Component(llm_manager, "LLMManager", "Python", "Gestión de modelos de lenguaje")
+    Component(vector_store, "VectorStore", "Python", "Almacenamiento de embeddings")
+    Component(embedding_service, "EmbeddingService", "Python", "Generación de embeddings")
+    Component(prompt_manager, "PromptManager", "Python", "Gestión de prompts")
+    
+    ' Chatbot Components
+    Component(chatbot_engine, "ChatbotEngine", "Python", "Motor del chatbot")
+    Component(chatbot_context_manager, "ChatbotContextManager", "Python", "Gestión de contexto")
+    Component(chatbot_response_generator, "ChatbotResponseGenerator", "Python", "Generación de respuestas")
+    
+    ' Advisor Components
+    Component(advisor_learning_engine, "AdvisorLearningEngine", "Python", "Motor de aprendizaje")
+    Component(advisor_recommendation_engine, "AdvisorRecommendationEngine", "Python", "Motor de recomendaciones")
+    Component(advisor_profile_manager, "AdvisorProfileManager", "Python", "Gestión de perfiles")
+    Component(advisor_adaptation_engine, "AdvisorAdaptationEngine", "Python", "Motor de adaptación")
+    Component(advisor_knowledge_base, "AdvisorKnowledgeBase", "Python", "Base de conocimiento")
+    
+    ' Infrastructure Layer
+    Component(chatbot_repository, "ChatbotRepository", "SQLAlchemy", "Persistencia del chatbot")
+    Component(advisor_repository, "AdvisorRepository", "SQLAlchemy", "Persistencia de asesoría")
+    Component(cache_service, "CacheService", "Redis", "Gestión de caché")
+    Component(event_publisher, "EventPublisher", "Kafka", "Publicación de eventos")
+    
+    ' External Integrations
+    Component(openai_client, "OpenAIClient", "OpenAI SDK", "Cliente OpenAI")
+    Component(huggingface_client, "HuggingFaceClient", "HuggingFace SDK", "Cliente HuggingFace")
+    Component(pinecone_client, "PineconeClient", "Pinecone SDK", "Cliente Pinecone")
+    
+    ' Error Handling
+    Component(error_handler, "Error Handler", "FastAPI", "Manejo de errores")
+    Component(retry_manager, "Retry Manager", "Python", "Gestión de reintentos")
+    Component(circuit_breaker, "Circuit Breaker", "Python", "Patrón Circuit Breaker")
+    Component(fallback_handler, "Fallback Handler", "Python", "Manejo de fallbacks")
+    
+    ' Cross-cutting Concerns
+    Component(logging_service, "Logging Service", "Python", "Logging")
+    Component(metrics_service, "Metrics Service", "Prometheus", "Métricas")
+    Component(validation_service, "Validation Service", "Python", "Validación")
+    Component(telemetry_service, "Telemetry Service", "OpenTelemetry", "Telemetría")
+}
+
+' External Relations
+Rel(api_gateway, chatbot_controller, "Chatbot requests", "HTTP")
+Rel(api_gateway, advisor_controller, "Advisor requests", "HTTP")
+
+' API Layer Relations
+Rel(chatbot_controller, chatbot_orchestrator, "Uses")
+Rel(advisor_controller, advisor_orchestrator, "Uses")
+
+' Application Layer Relations
+Rel(chatbot_orchestrator, chatbot_engine, "Uses")
+Rel(chatbot_orchestrator, chatbot_context_manager, "Uses")
+Rel(chatbot_orchestrator, chatbot_response_generator, "Uses")
+Rel(chatbot_orchestrator, llm_manager, "Uses")
+Rel(chatbot_orchestrator, ai_events, "Raises events")
+Rel(chatbot_orchestrator, chatbot_repository, "Uses")
+
+Rel(chatbot_engine, vector_store, "Uses")
+Rel(chatbot_engine, prompt_manager, "Uses")
+Rel(chatbot_engine, cache_service, "Uses")
+Rel(chatbot_engine, event_publisher, "Publishes events")
+Rel(chatbot_engine, chatbot_repository, "Uses")
+
+Rel(advisor_orchestrator, advisor_learning_engine, "Uses")
+Rel(advisor_orchestrator, advisor_recommendation_engine, "Uses")
+Rel(advisor_orchestrator, advisor_profile_manager, "Uses")
+Rel(advisor_orchestrator, advisor_adaptation_engine, "Uses")
+Rel(advisor_orchestrator, advisor_knowledge_base, "Uses")
+Rel(advisor_orchestrator, llm_manager, "Uses")
+Rel(advisor_orchestrator, vector_store, "Uses")
+Rel(advisor_orchestrator, advisor_repository, "Uses")
+
+' Domain Layer Relations
+Rel(chatbot_aggregate, ai_events, "Raises events")
+Rel(advisor_aggregate, ai_events, "Raises events")
+
+' NLP Layer Relations
+Rel(llm_manager, openai_client, "Uses")
+Rel(llm_manager, huggingface_client, "Uses")
+Rel(vector_store, pinecone_client, "Uses")
+Rel(embedding_service, huggingface_client, "Uses")
+Rel(prompt_manager, llm_manager, "Uses")
+
+' Infrastructure Relations
+Rel(chatbot_repository, postgres_db, "Reads/Writes chatbot data", "SQL")
+Rel(advisor_repository, postgres_db, "Reads/Writes advisor data", "SQL")
+Rel(cache_service, redis_cache, "Reads/Writes cache data", "Redis Protocol")
+Rel(event_publisher, kafka_broker, "Publishes AI events", "Kafka Protocol")
+Rel(openai_client, openai_api, "Uses OpenAI API", "HTTPS/API")
+Rel(huggingface_client, huggingface_api, "Uses HuggingFace API", "HTTPS/API")
+Rel(pinecone_client, pinecone, "Uses Pinecone API", "HTTPS/API")
+
+' Error Handling Relations
+Rel(error_handler, retry_manager, "Manages retries")
+Rel(error_handler, circuit_breaker, "Manages circuit breaker")
+Rel(error_handler, fallback_handler, "Manages fallbacks")
+Rel(error_handler, chatbot_controller, "Handles errors")
+Rel(error_handler, advisor_controller, "Handles errors")
+
+' Cross-cutting Relations
+Rel(logging_service, chatbot_controller, "Logs requests")
+Rel(metrics_service, chatbot_orchestrator, "Collects metrics")
+Rel(validation_service, chatbot_controller, "Validates input")
+Rel(telemetry_service, chatbot_controller, "Collects telemetry")
+
+@enduml 
