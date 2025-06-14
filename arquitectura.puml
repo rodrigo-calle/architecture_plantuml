@@ -1,0 +1,260 @@
+@startuml CRM_Educativo_Arquitectura
+!theme vibrant
+!define RECTANGLE class
+
+title *Arquitectura CRM Educativo - Microservicios con DDD*
+
+' =======================
+' CAPA DE PRESENTACIÓN
+' =======================
+package "🎨 CAPA DE PRESENTACIÓN" as frontend {
+    [Admin Dashboard\nAngular 17 + NgRx\nMaterial UI] as admin_web
+    [Web Pública\nNext.js 14 + TypeScript\nTailwind CSS] as public_web
+    [Mobile App\nFlutter 3.x + Dart\nGetX/Riverpod] as mobile_app
+    [PWA\nService Workers\nIndexedDB] as pwa
+}
+
+' =======================
+' API GATEWAY & SEGURIDAD
+' =======================
+package "🚪 API GATEWAY & SEGURIDAD" as gateway {
+    [Kong Gateway\nRate Limiting\nLoad Balancing\nCircuit Breaker] as kong
+    [Traefik\nReverse Proxy\nSSL Termination\nService Discovery] as traefik
+    [Keycloak\nOAuth 2.0/OIDC\nJWT + SSO] as auth
+    [GraphQL Federation\nApollo Federation\nSchema Stitching] as graphql
+}
+
+' =======================
+' MICROSERVICIOS - DDD
+' =======================
+package "⚙️ MICROSERVICIOS - DOMAIN DRIVEN DESIGN" as microservices {
+
+    package "Identity & Access Context" {
+        [🔐 Auth Service\nSpring Boot 3\nSpring Security\nJWT + OAuth2] as auth_service
+    }
+
+    package "User Management Context" {
+        [👥 User Service\nNode.js + Express\nTypeScript + Prisma] as user_service
+    }
+
+    package "Learning Context" {
+        [📚 Course Service\nPython + FastAPI\nSQLAlchemy\nCelery Tasks] as course_service
+    }
+
+    package "Payment Context" {
+        [💳 Payment Service\nJava + Spring Boot\nStripe SDK\nEvent Sourcing] as payment_service
+    }
+
+    package "CRM Context" {
+        [📊 CRM Core\nC# + .NET 8\nEntity Framework\nMediatR CQRS] as crm_service
+    }
+
+    package "Analytics Context" {
+        [📈 Analytics Service\nPython + Django\nPandas + NumPy\nApache Airflow] as analytics_service
+    }
+
+    package "Communication Context" {
+        [📧 Notification Service\nNode.js + NestJS\nBull Queue\nWebSocket] as notification_service
+    }
+
+    package "AI Context" {
+        [🤖 AI & ML Service\nPython + FastAPI\nLangChain\nHugging Face] as ai_service
+    }
+}
+
+' =======================
+' CAPA DE DATOS
+' =======================
+package "🗄️ CAPA DE DATOS" as dataLayer {
+    database "PostgreSQL 15\nOLTP Database\nConnection Pooling\nRead Replicas" as postgres
+    database "ClickHouse\nOLAP Warehouse\nColumnar Storage\nReal-time Analytics" as clickhouse
+    database "Redis Cluster\nCache Layer\nSession Store\nRate Limiting" as redis
+    database "Elasticsearch\nSearch Engine\nFull-text Search\nML Features" as elasticsearch
+    queue "Apache Kafka\nMessage Broker\nEvent Streaming\nCQRS Events" as kafka
+    cloud "AWS S3 + CloudFront\nFile Storage\nCDN + MediaConvert\nVideo Streaming" as s3
+}
+
+' =======================
+' SERVICIOS EXTERNOS
+' =======================
+package "🌐 SERVICIOS EXTERNOS" as external {
+    [OpenAI GPT-4\nChatbot & AI] as openai
+    [SendGrid\nEmail Marketing] as sendgrid
+    [WhatsApp Business API\nMessaging] as whatsapp
+    [Firebase\nPush Notifications] as firebase
+    [Stripe/PayPal\nPayment Gateways] as payment_gateways
+    [Zoom/WebRTC\nVideo Conferencing] as video_conf
+}
+
+' =======================
+' INFRAESTRUCTURA
+' =======================
+package "☁️ INFRAESTRUCTURA & DEVOPS" as infrastructure {
+    [Kubernetes (EKS/GKE)\nContainer Orchestration\nIstio Service Mesh\nAuto-scaling] as k8s
+    [GitHub Actions\nCI/CD Pipeline\nArgoCD\nSonarQube] as cicd
+    [Prometheus + Grafana\nMonitoring\nAlerting\nDashboards] as monitoring
+    [ELK Stack + Fluentd\nCentralized Logging\nLog Aggregation] as logging
+    [Jaeger\nDistributed Tracing\nPerformance Monitoring] as tracing
+    [HashiCorp Vault\nSecrets Management\nSOPS Encryption] as vault
+}
+
+' =======================
+' HERRAMIENTAS DE ANÁLISIS
+' =======================
+package "📊 BUSINESS INTELLIGENCE" as bi {
+    [Apache Superset\nDashboards\nData Visualization] as superset
+    [Metabase\nSelf-service BI\nReporting] as metabase
+    [Apache Airflow\nETL/ELT Pipelines\nData Orchestration] as airflow
+}
+
+' =======================
+' RELACIONES FRONTEND -> GATEWAY
+' =======================
+admin_web --> kong : HTTPS/REST
+public_web --> kong : HTTPS/REST
+mobile_app --> kong : HTTPS/REST
+pwa --> kong : HTTPS/REST
+
+admin_web --> graphql : GraphQL
+public_web --> graphql : GraphQL
+mobile_app --> graphql : GraphQL
+
+' =======================
+' RELACIONES GATEWAY -> MICROSERVICIOS
+' =======================
+kong --> traefik : Load Balance
+traefik --> auth_service : Route
+traefik --> user_service : Route
+traefik --> course_service : Route
+traefik --> payment_service : Route
+traefik --> crm_service : Route
+traefik --> analytics_service : Route
+traefik --> notification_service : Route
+traefik --> ai_service : Route
+
+auth --> auth_service : OAuth2/JWT
+graphql --> auth_service : Federation
+graphql --> user_service : Federation
+graphql --> course_service : Federation
+graphql --> crm_service : Federation
+
+' =======================
+' RELACIONES MICROSERVICIOS -> DATOS
+' =======================
+auth_service --> postgres : User Auth Data
+auth_service --> redis : Session Cache
+
+user_service --> postgres : User Profile
+user_service --> redis : Cache
+user_service --> elasticsearch : Search Index
+
+course_service --> postgres : Course Data
+course_service --> s3 : Video Storage
+course_service --> redis : Cache
+course_service --> elasticsearch : Course Search
+
+payment_service --> postgres : Transactions
+payment_service --> kafka : Payment Events
+payment_service --> redis : Cache
+
+crm_service --> postgres : CRM Data
+crm_service --> clickhouse : Analytics Data
+crm_service --> kafka : CRM Events
+crm_service --> redis : Cache
+
+analytics_service --> clickhouse : Read Analytics
+analytics_service --> postgres : Meta Data
+analytics_service --> kafka : Consume Events
+
+notification_service --> redis : Queue Management
+notification_service --> kafka : Event Consumption
+notification_service --> postgres : Notification Log
+
+ai_service --> postgres : AI Model Data
+ai_service --> redis : ML Cache
+ai_service --> elasticsearch : Vector Search
+
+' =======================
+' RELACIONES CON SERVICIOS EXTERNOS
+' =======================
+ai_service --> openai : API Calls
+notification_service --> sendgrid : Email Sending
+notification_service --> whatsapp : WhatsApp API
+notification_service --> firebase : Push Notifications
+payment_service --> payment_gateways : Payment Processing
+course_service --> video_conf : Live Classes
+
+' =======================
+' RELACIONES DE INFRAESTRUCTURA
+' =======================
+microservices --> k8s : Deployed on
+k8s --> monitoring : Metrics
+k8s --> logging : Logs
+k8s --> tracing : Traces
+k8s --> vault : Secrets
+
+cicd --> k8s : Deploy
+monitoring --> kafka : Metrics Events
+logging --> kafka : Log Events
+
+' =======================
+' RELACIONES DE BI
+' =======================
+superset --> clickhouse : Analytics Queries
+metabase --> postgres : Operational Data
+metabase --> clickhouse : Analytics Data
+airflow --> postgres : ETL Source
+airflow --> clickhouse : ETL Target
+airflow --> s3 : Data Lake
+
+' =======================
+' COMUNICACIÓN ENTRE MICROSERVICIOS
+' =======================
+user_service --> kafka : User Events
+course_service --> kafka : Course Events
+payment_service --> kafka : Payment Events
+crm_service --> kafka : CRM Events
+
+crm_service <--> user_service : API Calls
+crm_service <--> course_service : API Calls
+crm_service <--> payment_service : API Calls
+ai_service <--> user_service : User Data
+ai_service <--> course_service : Course Recommendations
+notification_service <--> crm_service : Campaign Triggers
+
+' =======================
+' PATRONES ARQUITECTÓNICOS
+' =======================
+note right of kafka
+  *Event-Driven Architecture*
+  - Event Sourcing
+  - CQRS Pattern
+  - Saga Pattern
+  - Domain Events
+end note
+
+note right of microservices
+  *Domain-Driven Design*
+  - Bounded Contexts
+  - Aggregates
+  - Domain Services
+  - Repository Pattern
+end note
+
+note right of k8s
+  *Cloud-Native Patterns*
+  - Circuit Breaker
+  - Bulkhead
+  - Service Mesh
+  - Blue-Green Deployment
+end note
+
+note bottom of gateway
+  *API Gateway Patterns*
+  - Backend for Frontend
+  - Rate Limiting
+  - Authentication
+  - Request Routing
+end note
+
+@enduml
